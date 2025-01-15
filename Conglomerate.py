@@ -273,17 +273,39 @@ def create_occupation(create_clinical_history_and_physical_id, Occupation, occup
     except Error as e:
         print(f"Error: {e}")
 
-#def create_pshx():##############################################
-
-def create_pmhx(clinical_history_and_physical_id, PMHX):
-    pmhx_option_id = 87
+def create_pshx(clinical_history_and_physical_id,pshx_value ):
+    other = pshx_value
+    default_value = 12
 
     query = """
-    INSERT INTO clinical_history_and_physical_admission_pmhx_options (clinical_history_and_physical_id, pmhx_option_id)
+    INSERT INTO clinical_history_and_physical_past_surgical_procedure (clinical_history_and_physical_id, procedure_type_id, other)
     VALUES (%s, %s, %s)
     """
     try:
-        cursor.execute(query, (clinical_history_and_physical_id, pmhx_option_id))
+        cursor.execute(query, (clinical_history_and_physical_id, default_value, other))
+    
+    # Commit the transaction
+        conn.commit()
+
+    # Get the ID of the newly inserted patient
+        pshx_id = cursor.lastrowid
+        print(f"Admission_form created successfully with ID: {pshx_id}")
+
+
+    except Error as e:
+        print(f"Error: {e}")
+
+
+def create_pmhx(clinical_history_and_physical_id, PMHX):
+    pmhx_option_id = 87
+    other_value = PMHX
+
+    query = """
+    INSERT INTO clinical_history_and_physical_admission_pmhx_options (clinical_history_and_physical_id, pmhx_option_id,other)
+    VALUES (%s, %s, %s)
+    """
+    try:
+        cursor.execute(query, (clinical_history_and_physical_id, pmhx_option_id, other_value))
     
     # Commit the transaction
         conn.commit()
@@ -386,8 +408,8 @@ def create_socialhx(social_hx):# This social_hx would be the data from stapleton
         conn.commit()
 
         # Get the ID of the newly inserted patient
-        clinical_history_and_physical_patient_occupations_id = cursor.lastrowid
-        print(f"Admission_form created successfully with ID: {clinical_history_and_physical_patient_occupations_id}")
+        socialhx_id = cursor.lastrowid
+        print(f"Admission_form created successfully with ID: {socialhx_id}")
         
     except Error as e:
         print(f"Error: {e}")
@@ -429,7 +451,7 @@ def importing_data_from_stapleton_file(file_path):
             social_hx = row['SocialHx:']
             family_hx = row['FamilyHx:']
             pmhx = row['PMHx']
-            psxh = row['PSHx']
+            pshx = row['PSHx']
             rxhx = row['RxHx']
             problem_list = row['Problem list']
             confidential = row['Confidential']
@@ -493,8 +515,14 @@ def importing_data_from_stapleton_file(file_path):
             # Creates the GTPALS records
             create_gtpals(clinical_history_and_physical_id, g, t, p, a, l, births)
 
+            # Creates pshx record
+            create_pshx(clinical_history_and_physical_id,pshx )
+
+
+
             create_socialhx()
             create_familyhx()
+
             create_rxhx()
             create_gyne_surgery()
 
