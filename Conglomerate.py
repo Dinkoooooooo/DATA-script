@@ -107,7 +107,9 @@ def create_ongoing_problems(clinical_history_and_physical_id,Problem_list ):
     except Error as e:
         print(f"Error: {e}")
 
-def create_allergies(patient_id ,Allergies, allergens_dict): # Make Allergens a dictionary.###########################################################
+allergens_dict =
+
+def create_allergies(patient_id ,Allergies, allergens_dict): 
 
     Allergies = allergy
 
@@ -321,9 +323,20 @@ def create_pmhx(clinical_history_and_physical_id, PMHX):
 
 
 contraception_dict = {
-    1: "No",
-    2: "Yes",
-    3: "Not Sure"
+    1: "Caps",
+    2: "Combined pill",
+    3: "Condoms (female)",
+    4: "Condoms (male)",
+    5: "Contraceptive Implant" ,
+    6: "Contraceptive Injection" ,
+    7: "Contraceptive Patch",
+    8: "Diaphragms",
+    9: "Intrauterine Device (IUD)",
+    10: "Intrauterine System (IUD)",
+    11: "Natural Family Planning",
+    12: "Progestogen-only Pill",
+    13: "Vaginal Ring",
+    14: "Nil"
 }
 
 
@@ -376,7 +389,7 @@ def create_gtpals(clinical_history_and_physical_id, G, T, P, A, L, description):
     VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
     try:
-        cursor.execute(query, (clinical_history_and_physical_id, G, T, P, A, L description))
+        cursor.execute(query, (clinical_history_and_physical_id, G, T, P, A, L, description))
     
          # Commit the transaction
         conn.commit()
@@ -414,18 +427,19 @@ def create_socialhx(social_hx):# This social_hx would be the data from stapleton
     except Error as e:
         print(f"Error: {e}")
 
+def create_rxhx():
+    pass
 
 #create patient done --> create Admission_form --> create clinical_history_and_physical_id --> continue normal flow.
 #separate the extraction of id's (patient_id/clinical_history_and_physical_id, admission_di) 
 
 #Theres still more to do, but untill i figure it out, lemme work on how the the PROCESS works.
 
-
 file_path = None #this will be stapletons export file.
 
 def importing_data_from_stapleton_file(file_path):
     # Open the CSV file
-    with open(csv_file_path, mode='r', newline='', encoding='utf-8') as csv_file:
+    with open(file_path, mode='r', newline='', encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file)
     
         # Loop through each row in the CSV
@@ -510,7 +524,7 @@ def importing_data_from_stapleton_file(file_path):
             create_pmhx(clinical_history_and_physical_id, pmhx)
 
             # Creates the Contraception record
-            create_contraception(clinical_history_and_physical_id, contraception, contraception_disc)
+            create_contraception(clinical_history_and_physical_id, contraception, contraception_dict)
             
             # Creates the GTPALS records
             create_gtpals(clinical_history_and_physical_id, g, t, p, a, l, births)
@@ -520,11 +534,11 @@ def importing_data_from_stapleton_file(file_path):
 
 
 
-            create_socialhx()
-            create_familyhx()
+            create_socialhx()#pain
+            create_familyhx()#pain
 
-            create_rxhx()
-            create_gyne_surgery()
+            create_rxhx()#pain
+            create_gyne_surgery()#pain
 
 
 
