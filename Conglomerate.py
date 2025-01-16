@@ -490,6 +490,70 @@ def create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx):# This f
     except Error as e:
         print(f"Error: {e}")
 
+
+def create_past_gyne_surg(patient_id,created_at,updated_at ,prev_gyn_surg ):
+    procedure_type_id = 1041
+    procedure_catagory_id = 29
+    cancelled = 0
+    other = prev_gyn_surg
+    start_date = datetime.now()
+    end_date = datetime.now()
+
+    # first the procedure gets added to the database.
+    query = """
+    INSERT INTO procedures (patient_id, start_date ,end_date ,procedure_type_id, procedure_catagory_id,  other, cancelled, created_at, updated_at)
+    VALUES (%s, %s, %s, %s, %s, %s)
+    """
+    try:
+        cursor.execute(query, (patient_id, start_date ,end_date ,procedure_type_id,procedure_catagory_id,  other,  cancelled, created_at, updated_at))
+    
+         # Commit the transaction
+        conn.commit()
+
+        # Get the ID of the newly inserted patient
+        procedure_id = cursor.lastrowid
+        print(f"Admission_form created successfully with ID: {procedure_id}")
+        return procedure_id
+        
+    except Error as e:
+        print(f"Error: {e}")
+   
+    
+    drains = 0
+    unscheduled_return = 0
+    incomplete = 0
+    query = """
+    INSERT INTO surgeries (procedure_id,created_at,updated_at,drains,cancelled, unscheduled_return,incomplete)
+    VALUES (%s, %s, %s, %s, %s, %s)
+    """
+    try:
+        cursor.execute(query, (procedure_id,created_at,updated_at,drains,cancelled, unscheduled_return,incomplete))
+    
+         # Commit the transaction
+        conn.commit()
+
+        # Get the ID of the newly inserted patient
+        surgery_id = cursor.lastrowid
+        print(f"Admission_form created successfully with ID: {surgery_id}")
+        
+        
+    except Error as e:
+        print(f"Error: {e}")
+
+    
+
+    
+
+
+
+
+
+
+
+
+
+    
+
 def create_rxhx():
     return None
 
@@ -604,6 +668,9 @@ def importing_data_from_stapleton_file(file_path):
             # Creates the family_hx record
             create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx)
 
+            # Creates the past gyne surg record
+            create_past_gyne_surg(patient_id,created_at,updated_at ,prev_gyn_surg )
+
 
 
 
@@ -615,9 +682,6 @@ def importing_data_from_stapleton_file(file_path):
 
 
             create_rxhx()
-
-            create_gyne_surgery()
-
 
 
 
