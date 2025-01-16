@@ -553,9 +553,31 @@ def create_past_gyne_surg(patient_id,created_at,updated_at ,prev_gyn_surg ):
 
 
     
+def create_rxhx(patient_unique_id):# this still has to be worked on , reppurosed database check function
+    """
+    Fetches the sdpr_patient_id for a given unique patient identifier.
+    
+    Args:
+        patient_unique_id (str): The unique identifier for the patient (e.g., name, patient ID).
+    
+    Returns:
+        int: The sdpr_patient_id if found, or None if the patient does not exist.
+    """
+    try:
+        # Query to get the sdpr_patient_id
+        query_patient_id = "SELECT id FROM sdpr_patient WHERE unique_identifier = %s"  # Adjust column name
+        cursor.execute(query_patient_id, (patient_unique_id,))
+        result = cursor.fetchone()
 
-def create_rxhx():
-    return None
+        if result:
+            sdpr_patient_id = result[0]
+            return sdpr_patient_id
+        else:
+            print("Error: Patient record not found.")
+            return None
+    except Error as e:
+        print(f"Error while fetching sdpr_patient_id: {e}")
+        return None
 
 #create patient done --> create Admission_form --> create clinical_history_and_physical_id --> continue normal flow.
 #separate the extraction of id's (patient_id/clinical_history_and_physical_id, admission_di) 
