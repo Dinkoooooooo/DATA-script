@@ -419,15 +419,38 @@ def create_gtpals(clinical_history_and_physical_id, G, T, P, A, L, description):
     except Error as e:
         print(f"Error: {e}")
 
-def create_socialhx(social_hx):# This social_hx would be the data from stapletons files. ///// When sorted, duplicate the code for the other family_hx options.
-    created_at = datetime.now()
-    updated_at = datetime.now()
+
+
+def get_sdpr_patient_id(patient_unique_id):
+    """
+    Fetches the sdpr_patient_id for a given unique patient identifier.
+    
+    Args:
+        patient_unique_id (str): The unique identifier for the patient (e.g., name, patient ID).
+    
+    Returns:
+        int: The sdpr_patient_id if found, or None if the patient does not exist.
+    """
+    try:
+        # Query to get the sdpr_patient_id
+        query_patient_id = "SELECT id FROM sdpr_patient WHERE unique_identifier = %s"  # Adjust column name
+        cursor.execute(query_patient_id, (patient_unique_id,))
+        result = cursor.fetchone()
+
+        if result:
+            sdpr_patient_id = result[0]
+            return sdpr_patient_id
+        else:
+            print("Error: Patient record not found.")
+            return None
+    except Error as e:
+        print(f"Error while fetching sdpr_patient_id: {e}")
+        return None
+
+def create_socialhx(created_at, updated_at, sdpr_patient_id ,social_hx):# This social_hx would be the data from stapletons files. ///// When sorted, duplicate the code for the other family_hx options.
     cancelled = 0
     other = social_hx # This would have to be that data from stapletons files.
-
-    sdpr_patient_id = None #would have to work this out based on the id number, this is created when a patient record is created. (automatically in another table)
-    admission_form_option_id = None #This one is a bit tricky, because there are multiple "other" options
-
+    admission_form_option_id = 11
     query = """
     INSERT INTO spdr_patient_admission_form_options (sdpr_patient_id,  admission_form_option_id, other, cancelled, created_at, updated_at)
     VALUES (%s, %s, %s, %s, %s, %s)
@@ -445,8 +468,30 @@ def create_socialhx(social_hx):# This social_hx would be the data from stapleton
     except Error as e:
         print(f"Error: {e}")
 
+
+def create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx):# This family_hx would be the data from stapletons files. 
+    cancelled = 0
+    other = family_hx # This would have to be that data from stapletons files.
+    admission_form_option_id = 14
+    query = """
+    INSERT INTO spdr_patient_admission_form_options (sdpr_patient_id,  admission_form_option_id, other, cancelled, created_at, updated_at)
+    VALUES (%s, %s, %s, %s, %s, %s)
+    """
+    try:
+        cursor.execute(query, (sdpr_patient_id,  admission_form_option_id, other, cancelled, created_at, updated_at))
+    
+         # Commit the transaction
+        conn.commit()
+
+        # Get the ID of the newly inserted patient
+        familyhx_id = cursor.lastrowid
+        print(f"Admission_form created successfully with ID: {familyhx_id}")
+        
+    except Error as e:
+        print(f"Error: {e}")
+
 def create_rxhx():
-    pass
+    return None
 
 #create patient done --> create Admission_form --> create clinical_history_and_physical_id --> continue normal flow.
 #separate the extraction of id's (patient_id/clinical_history_and_physical_id, admission_di) 
@@ -550,13 +595,35 @@ def importing_data_from_stapleton_file(file_path):
             # Creates pshx record
             create_pshx(clinical_history_and_physical_id,pshx )
 
+            # Creates the sdpr_patient_id value for social_hx and Family Hx
+            sdpr_patient_id = get_sdpr_patient_id(id_number)
+
+            # Creates the social_hx record
+            create_socialhx(created_at, updated_at, sdpr_patient_id ,family_hx)
+
+            # Creates the family_hx record
+            create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx)
 
 
-            create_socialhx()#pain
-            create_familyhx()#pain
 
-            create_rxhx()#pain
-            create_gyne_surgery()#pain
+
+
+
+
+
+
+
+
+            create_rxhx()
+
+            create_gyne_surgery()
+
+
+
+
+
+
+# Down here, you want to create a make it run, the connection to the database and the tables. then between you are gonna want to add the importing patient data function.
 
 
 
