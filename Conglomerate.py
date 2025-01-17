@@ -747,17 +747,7 @@ def importing_data_from_stapleton_file(file_path):
             # Creates the past gyne surg record
             create_past_gyne_surg(patient_id,created_at,updated_at ,prev_gyn_surg )
 
-
-
-
-
-
-
-
-
-
-
-            create_rxhx()
+            create_rxhx(patient_id, rxhx,created_at ,updated_at)
 
 
 
