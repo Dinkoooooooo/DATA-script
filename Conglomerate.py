@@ -553,9 +553,11 @@ def create_past_gyne_surg(patient_id,created_at,updated_at ,prev_gyn_surg ):
 
 
     
-def create_rxhx(patient_unique_id):# this still has to be worked on , reppurosed database check function
+def create_rxhx(patient_id, drug_name,start_date,end_date,is_surgical_prophylaxis,created_at,updated_at,mark):# this still has to be worked on , reppurosed database check function
+    mark = 0
+    is_surgical_prophylaxis = 0
     """
-    Fetches the sdpr_patient_id for a given unique patient identifier.
+    Fetches the drugs for a given unique patient identifier.
     
     Args:
         patient_unique_id (str): The unique identifier for the patient (e.g., name, patient ID).
@@ -564,20 +566,72 @@ def create_rxhx(patient_unique_id):# this still has to be worked on , reppurosed
         int: The sdpr_patient_id if found, or None if the patient does not exist.
     """
     try:
-        # Query to get the sdpr_patient_id
-        query_patient_id = "SELECT id FROM sdpr_patient WHERE unique_identifier = %s"  # Adjust column name
-        cursor.execute(query_patient_id, (patient_unique_id,))
+        # Query to check the drugfrom the pms , if its in the database.
+        query_drug_id = "SELECT id FROM drugs WHERE unique_identifier = %s"  # Adjust column name
+        cursor.execute(query_drug_id, (drug_name,))
         result = cursor.fetchone()
 
+
+
         if result:
-            sdpr_patient_id = result[0]
-            return sdpr_patient_id
+            drug_id = result
+            query = """
+            INSERT INTO patient_drugs (patient_id,drug_id,start_date,end_date,is_surgical_prophylaxis,created_at,updated_at,mark)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            try:
+                cursor.execute(query, (patient_id,drug_id,start_date,end_date,is_surgical_prophylaxis,created_at,updated_at,mark))
+    
+                # Commit the transaction
+                conn.commit()
+
+                # Get the ID of the newly inserted patient
+                surgery_id = cursor.lastrowid
+                print(f"Admission_form created successfully with ID: {surgery_id}")
+        
+        
+            except Error as e:
+                print(f"Error: {e}")
+
+
+        elif not result:
+            drug_id = 4397
+            query = """
+            INSERT INTO patient_drugs (patient_id,drug_id,start_date,end_date,is_surgical_prophylaxis,created_at,updated_at,mark)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            try:
+                cursor.execute(query, (patient_id,drug_id,start_date,end_date,is_surgical_prophylaxis,created_at,updated_at,mark))
+    
+                # Commit the transaction
+                conn.commit()
+
+                # Get the ID of the newly inserted patient
+                surgery_id = cursor.lastrowid
+                print(f"Admission_form created successfully with ID: {surgery_id}")
+        
+        
+            except Error as e:
+                print("Error: Patient record not found.")
+
         else:
             print("Error: Patient record not found.")
             return None
+        
     except Error as e:
         print(f"Error while fetching sdpr_patient_id: {e}")
         return None
+
+
+
+
+
+
+
+
+
+
+
 
 #create patient done --> create Admission_form --> create clinical_history_and_physical_id --> continue normal flow.
 #separate the extraction of id's (patient_id/clinical_history_and_physical_id, admission_di) 
@@ -685,7 +739,7 @@ def importing_data_from_stapleton_file(file_path):
             sdpr_patient_id = get_sdpr_patient_id(id_number)
 
             # Creates the social_hx record
-            create_socialhx(created_at, updated_at, sdpr_patient_id ,family_hx)
+            create_socialhx(created_at, updated_at, sdpr_patient_id ,social_hx)
 
             # Creates the family_hx record
             create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx)
