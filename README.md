@@ -22,14 +22,9 @@ Replace the placeholders in the database connection (host, database, user, passw
 
 Purpose: Inserts a new patient record into the patients table.
 
-Parameters:
-
-Patient details such as Folder_number, Id_number, First_name, last_name, etc.
-
+Parameters:Patient details such as Folder_number, Id_number, First_name, last_name, etc.
 conn (database connection) and cursor (to execute the query).
-
 Returns: The patient_id of the newly inserted patient.
-
 Usage: Called during data import to create a patient record in the database.
 
 2. `create_admission_forms`
