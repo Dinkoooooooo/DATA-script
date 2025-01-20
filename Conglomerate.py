@@ -541,18 +541,6 @@ def create_past_gyne_surg(patient_id,created_at,updated_at ,prev_gyn_surg ):
         print(f"Error: {e}")
 
     
-
-    
-
-
-
-
-
-
-
-
-
-    
 def create_rxhx(patient_id, drug_name,start_date,end_date,is_surgical_prophylaxis,created_at,updated_at,mark):# this still has to be worked on , reppurosed database check function
     mark = 0
     is_surgical_prophylaxis = 0
@@ -620,18 +608,7 @@ def create_rxhx(patient_id, drug_name,start_date,end_date,is_surgical_prophylaxi
         
     except Error as e:
         print(f"Error while fetching sdpr_patient_id: {e}")
-        return None
-
-
-
-
-
-
-
-
-
-
-
+        
 
 #create patient done --> create Admission_form --> create clinical_history_and_physical_id --> continue normal flow.
 #separate the extraction of id's (patient_id/clinical_history_and_physical_id, admission_di) 
@@ -749,13 +726,21 @@ def importing_data_from_stapleton_file(file_path):
 
             create_rxhx(patient_id, rxhx,created_at ,updated_at)
 
-
-
-
-
 # Down here, you want to create a make it run, the connection to the database and the tables. then between you are gonna want to add the importing patient data function.
 
 
+def Main_function():
+    conn = None  # Declare the connection object
+    cursor = None  # Declare the cursor object
+    # Create the database connection
+    try:
+        # Establish the database connection
+        conn = mysql.connector.connect(
+            host='your_host',
+            database='your_db',
+            user='your_user',
+            password='your_password'
+        )
 
 
 
