@@ -13,10 +13,10 @@ import datetime
 #Create_vist()# None.
 #Create_admissionn_note()# save id
 
-def create_patient(Folder_number,Id_number,First_name,last_name,title,dob,Gender,created_at,updated_at,merged,organisation_id,canonical):#open connection before, or after this runs, check with mike.
+def create_patient(Folder_number,Id_number,First_name,last_name,title,dob,Gender,created_at,updated_at,merged,organisation_id,canonical, conn, cursor):#open connection before, or after this runs, check with mike.
     query = """
         INSERT INTO patients (Folder_number, Id_number, First_name, last_name, title, dob, Gender, created_at, updated_at, merged, organisation_id, canonical)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
     try:
         cursor.execute(query, (Folder_number, Id_number, First_name, last_name, title, dob, Gender, created_at, updated_at, merged, organisation_id, canonical))
@@ -33,7 +33,7 @@ def create_patient(Folder_number,Id_number,First_name,last_name,title,dob,Gender
     except Error as e:
         print(f"Error: {e}")
 
-def create_admission_forms(patient_id,created_at,updated_at):
+def create_admission_forms(patient_id,created_at,updated_at, conn, cursor):
 
     query = """
     INSERT INTO admission_forms (patient_id, created_at, updated_at)
@@ -56,7 +56,7 @@ def create_admission_forms(patient_id,created_at,updated_at):
 
 
 
-def create_clinical_history_and_physical(user_id, patient_id,admission_form_id):
+def create_clinical_history_and_physical(user_id, patient_id,admission_form_id, conn, cursor):
     user_id = 12345 ############################################################# Update user_id with the correct one mike gives.
     signed_off = 0
     time_for_import = datetime.now()
@@ -89,7 +89,7 @@ def create_clinical_history_and_physical(user_id, patient_id,admission_form_id):
 
 
 
-def create_ongoing_problems(clinical_history_and_physical_id,Problem_list ):
+def create_ongoing_problems(clinical_history_and_physical_id,Problem_list , conn, cursor):
     query = """
     INSERT INTO clinical_history_and_physical_patient_ongoing_problems (clinical_history_and_physical_id, Problem_list)
     VALUES (%s, %s)
@@ -127,11 +127,9 @@ allergens_dict = {
     17: "Local anaesthetics"
 }
 
-def create_allergies(patient_id ,Allergies, allergens_dict): 
+def create_allergies(patient_id ,Allergies, allergens_dict, conn, cursor): 
 
-    Allergies = allergy
-
-    allergy = allergy.strip().lower() #Normalise the input
+    allergy = Allergies.strip().lower() #Normalise the input
 
     # Iterate over the dictionary to find the allergen ID
     for allergen, allergen_id in allergens_dict.items():
@@ -157,6 +155,7 @@ def create_allergies(patient_id ,Allergies, allergens_dict):
         
             except Error as e:
                 print(f"Error: {e}")
+        break
         
     query = """
             INSERT INTO allergies (patient_id, allergen_id, other, recorded_at, start_date)
@@ -251,7 +250,7 @@ occupations_dict = {
     69: "Bookkeeper"
 }
 
-def create_occupation(create_clinical_history_and_physical_id, Occupation, occupations_dict):
+def create_occupation(create_clinical_history_and_physical_id, Occupation, occupations_dict, conn, cursor):
 
     # Search for a match in the occupations_dict
     for occupation_id, occupation_name in occupations_dict.items():
@@ -293,7 +292,7 @@ def create_occupation(create_clinical_history_and_physical_id, Occupation, occup
     except Error as e:
         print(f"Error: {e}")
 
-def create_pshx(clinical_history_and_physical_id,pshx_value ):
+def create_pshx(clinical_history_and_physical_id,pshx_value ,conn, cursor ):
     other = pshx_value
     default_value = 12
 
@@ -316,7 +315,7 @@ def create_pshx(clinical_history_and_physical_id,pshx_value ):
         print(f"Error: {e}")
 
 
-def create_pmhx(clinical_history_and_physical_id, PMHX):
+def create_pmhx(clinical_history_and_physical_id, PMHX, conn, cursor):
     pmhx_option_id = 87
     other_value = PMHX
 
@@ -358,18 +357,18 @@ contraception_dict = {
 }
 
 
-def create_contraception(clinical_history_and_physical_id, contraception, contraception_disc):######Create contraception_disc
-
+def create_contraception(clinical_history_and_physical_id, contraception, contraception_disc ,conn, cursor):######Create contraception_disc
+    
     # Search for a match in the occupations_dict
-    for contaception_method_id, contraception_name in contraception_dict.items():
+    for contaception_method_id, contraception_name in contraception_disc.items():
         if contraception.strip().lower() == contraception_name.lower():
              # occupation_id Ready to be used.
             query = """
-            INSERT INTO clinical_history_and_physical_patient_contraception (clinical_history_and_physical_id, occupation_id)
+            INSERT INTO clinical_history_and_physical_patient_contraception (clinical_history_and_physical_id, contraception_method_id)
             VALUES (%s, %s)
             """
             try:
-                cursor.execute(query, (clinical_history_and_physical_id, occupation_id))
+                cursor.execute(query, (clinical_history_and_physical_id,contaception_method_id))
     
                  # Commit the transaction
                 conn.commit()
@@ -401,7 +400,7 @@ def create_contraception(clinical_history_and_physical_id, contraception, contra
         print(f"Error: {e}")
 
 
-def create_gtpals(clinical_history_and_physical_id, G, T, P, A, L, description): 
+def create_gtpals(clinical_history_and_physical_id, G, T, P, A, L, description,  conn, cursor): 
     query = """
     INSERT INTO clinical_history_and_physical_patient_contraception (clinical_history_and_physical_id, gravida, term, preterm, abortions, living_children, description)
     VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -421,7 +420,7 @@ def create_gtpals(clinical_history_and_physical_id, G, T, P, A, L, description):
 
 
 
-def get_sdpr_patient_id(patient_unique_id):
+def get_sdpr_patient_id(patient_unique_id, conn, cursor):
     """
     Fetches the sdpr_patient_id for a given unique patient identifier.
     
@@ -447,7 +446,7 @@ def get_sdpr_patient_id(patient_unique_id):
         print(f"Error while fetching sdpr_patient_id: {e}")
         return None
 
-def create_socialhx(created_at, updated_at, sdpr_patient_id ,social_hx):# This social_hx would be the data from stapletons files. ///// When sorted, duplicate the code for the other family_hx options.
+def create_socialhx(created_at, updated_at, sdpr_patient_id ,social_hx, conn, cursor):# This social_hx would be the data from stapletons files. ///// When sorted, duplicate the code for the other family_hx options.
     cancelled = 0
     other = social_hx # This would have to be that data from stapletons files.
     admission_form_option_id = 11
@@ -469,7 +468,7 @@ def create_socialhx(created_at, updated_at, sdpr_patient_id ,social_hx):# This s
         print(f"Error: {e}")
 
 
-def create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx):# This family_hx would be the data from stapletons files. 
+def create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx, conn, cursor):# This family_hx would be the data from stapletons files. 
     cancelled = 0
     other = family_hx # This would have to be that data from stapletons files.
     admission_form_option_id = 14
@@ -491,7 +490,7 @@ def create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx):# This f
         print(f"Error: {e}")
 
 
-def create_past_gyne_surg(patient_id,created_at,updated_at ,prev_gyn_surg ):
+def create_past_gyne_surg(patient_id,created_at,updated_at ,prev_gyn_surg, conn, cursor):
     procedure_type_id = 1041
     procedure_catagory_id = 29
     cancelled = 0
@@ -541,7 +540,7 @@ def create_past_gyne_surg(patient_id,created_at,updated_at ,prev_gyn_surg ):
         print(f"Error: {e}")
 
     
-def create_rxhx(patient_id, drug_name,start_date,end_date,is_surgical_prophylaxis,created_at,updated_at,mark):# this still has to be worked on , reppurosed database check function
+def create_rxhx(patient_id, drug_name,start_date,end_date,is_surgical_prophylaxis,created_at,updated_at,mark, conn, cursor):# this still has to be worked on , reppurosed database check function
     mark = 0
     is_surgical_prophylaxis = 0
     """
@@ -562,7 +561,7 @@ def create_rxhx(patient_id, drug_name,start_date,end_date,is_surgical_prophylaxi
 
 
         if result:
-            drug_id = result
+            drug_id = result[0]
             query = """
             INSERT INTO patient_drugs (patient_id,drug_id,start_date,end_date,is_surgical_prophylaxis,created_at,updated_at,mark)
             VALUES (%s, %s, %s, %s, %s, %s)
@@ -620,7 +619,7 @@ file_path = None #this will be stapletons export file.
 def importing_data_from_stapleton_file(file_path):
     # Open the CSV file
     with open(file_path, mode='r', newline='', encoding='utf-8') as csv_file:
-        csv_reader = csv.reader(csv_file)
+        csv_reader = csv.DictReader(csv_file)
     
         # Loop through each row in the CSV
         for row_number, row in enumerate(csv_reader, start=1):
@@ -742,12 +741,21 @@ def Main_function():
             user='your_user',
             password='your_password'
         )
-
-        importing_data_from_stapleton_file(file_path)
+        
+        # Initialize the cursor
+        cursor = conn.cursor() 
+        importing_data_from_stapleton_file(file_path, conn, cursor)
 
     except Error as e:
         print(f"Error to connect to MySQL database")
 
+    finally:
+        # Close the cursor and the connection
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
+        print("Database connection closed.")
 
 
 
