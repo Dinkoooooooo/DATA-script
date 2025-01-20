@@ -732,6 +732,7 @@ def importing_data_from_stapleton_file(file_path):
 def Main_function():
     conn = None  # Declare the connection object
     cursor = None  # Declare the cursor object
+    file_path = "Test.csv"
     # Create the database connection
     try:
         # Establish the database connection
@@ -742,6 +743,10 @@ def Main_function():
             password='your_password'
         )
 
+        importing_data_from_stapleton_file(file_path)
+
+    except Error as e:
+        print(f"Error to connect to MySQL database")
 
 
 
