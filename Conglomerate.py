@@ -56,17 +56,16 @@ def create_admission_forms(patient_id,created_at,updated_at, conn, cursor):
 
 
 
-def create_clinical_history_and_physical(user_id, patient_id,admission_form_id, conn, cursor):
+def create_clinical_history_and_physical(user_id, patient_id,admission_form_id, conn, cursor, created_at,updated_at):
     user_id = 12345 ############################################################# Update user_id with the correct one mike gives.
     signed_off = 0
-    time_for_import = datetime.now()
+    time_for_import = created_at # created_at , returns a formatted time, which can be used for the other values
     recorded_at = time_for_import
     created_at = time_for_import
     updated_at = time_for_import
     note_catagory_id = 6
 
-    created_at = datetime.now()
-    updated_at = datetime.now()
+
 
     query = """
     INSERT INTO clinical_history_and_physicals (user_id, patient_id, recorded_at, signed_off, created_at, updated_at, note_catagory_id, admission_form_id)
@@ -127,170 +126,98 @@ allergens_dict = {
     17: "Local anaesthetics"
 }
 
-def create_allergies(patient_id ,Allergies, allergens_dict, conn, cursor): 
-
-    allergy = Allergies.strip().lower() #Normalise the input
-
-    # Iterate over the dictionary to find the allergen ID
-    for allergen, allergen_id in allergens_dict.items():
-        if allergen.lower() == allergy:#if Found the allergen
-            #Allergen id can be used,
-            recorded_at = datetime.now()
-            start_date = datetime.now()
-            
-            
-            query = """
-            INSERT INTO allergies (patient_id, allergen_id, recorded_at, start_date)
-            VALUES (%s, %s, %s, %s)
-            """
-            try:
-                cursor.execute(query, (patient_id, allergen_id, recorded_at, start_date))
-    
-                 # Commit the transaction
-                conn.commit()
-
-                # Get the ID of the newly inserted patient
-                Allergies_id = cursor.lastrowid
-                print(f"Admission_form created successfully with ID: {Allergies_id}")
-        
-            except Error as e:
-                print(f"Error: {e}")
-        break
-        
-    query = """
-            INSERT INTO allergies (patient_id, allergen_id, other, recorded_at, start_date)
-            VALUES (%s, %s, %s, %s)
-            """
-    Failed_allergen_id = 9
-    try:
-        cursor.execute(query, (patient_id, Failed_allergen_id, allergy,recorded_at, start_date))
-    
-         # Commit the transaction
-        conn.commit()
-
-        # Get the ID of the newly inserted patient
-        Allergies_id = cursor.lastrowid
-        print(f"Admission_form created successfully with ID: {Allergies_id}")
-        
-    except Error as e:
-        print(f"Error: {e}")
-
-
-# For OCCUPATION
-
-occupations_dict = {
-    1: "Actor",
-    2: "Baker",
-    3: "Butcher",
-    4: "Carpenter",
-    5: "Cook",
-    6: "Doctor",
-    7: "Engineer",
-    8: "Farmer",
-    9: "Fireman",
-    10: "Fisherman",
-    11: "Gardener",
-    12: "Goldsmith",
-    13: "Hairdresser",
-    14: "Journalist",
-    15: "Judge",
-    16: "Lawyer",
-    17: "Mason",
-    18: "Mechanic",
-    19: "Nurse",
-    20: "Painter",
-    21: "Pilot",
-    22: "Plumber",
-    23: "Policeman",
-    24: "Postman",
-    25: "Secretary",
-    26: "Shoe-Shine Boy",
-    27: "Singer",
-    28: "Soldier",
-    29: "Tailor",
-    30: "Taxi Driver",
-    31: "Teacher",
-    32: "Waiter",
-    33: "Accountant",
-    34: "Bank Clerk",
-    35: "Clerical",
-    36: "Estate Agent",
-    37: "Fashion",
-    38: "Flight Attendant",
-    39: "Graphic Artist",
-    40: "Hairstylist",
-    41: "Housewife",
-    42: "Marketing",
-    43: "Model",
-    44: "Own Business",
-    45: "Personal Assistant",
-    46: "Public Relations",
-    47: "Receptionist",
-    48: "Retired",
-    49: "Social Worker",
-    50: "Student",
-    51: "Travel Consultant",
-    52: "Scientist",
-    53: "Physiotherapist",
-    54: "Medical Practitioner",
-    55: "Actuary",
-    56: "Business Executive",
-    57: "Police",
-    58: "Firefighter",
-    59: "Unemployed",
-    60: "Translator",
-    61: "Restauranteur",
-    62: "Packer",
-    63: "Salesperson",
-    64: "Tour Guide",
-    65: "Copywriter (Advertising)",
-    66: "Chef",
-    67: "Hotelier",
-    68: "Electrician",
-    69: "Bookkeeper"
-}
-
-def create_occupation(create_clinical_history_and_physical_id, Occupation, occupations_dict, conn, cursor):
-
-    # Search for a match in the occupations_dict
-    for occupation_id, occupation_name in occupations_dict.items():
-        if Occupation.strip().lower() == occupation_name.lower():
-             # occupation_id Ready to be used.
-            query = """
-            INSERT INTO clinical_history_and_physical_patient_occupations (create_clinical_history_and_physical_id, occupation_id)
-            VALUES (%s, %s)
-            """
-            try:
-                cursor.execute(query, (create_clinical_history_and_physical_id, occupation_id))
-    
-                 # Commit the transaction
-                conn.commit()
-
-                # Get the ID of the newly inserted patient
-                clinical_history_and_physical_patient_occupations_id = cursor.lastrowid
-                print(f"Admission_form created successfully with ID: {clinical_history_and_physical_patient_occupations_id}")
-        
-            except Error as e:
-                print(f"Error: {e}")
-            
-    
-    # If no match is found, return empty ID and unmatched value in details
-    query = """
-    INSERT INTO clinical_history_and_physical_patient_occupations (create_clinical_history_and_physical_id, detail)
-    VALUES (%s, %s)
+def create_allergies(patient_id, allergies, conn, cursor, created_at):
     """
-    try:
-        cursor.execute(query, (create_clinical_history_and_physical_id, Occupation))
-    
-         # Commit the transaction
-        conn.commit()
+    Function to create an allergy record for a patient.
+    Args:
+        patient_id: ID of the patient.
+        allergies: Name of the allergy (string).
+        conn: Database connection object.
+        cursor: Database cursor object.
+        created_at: Timestamp of record creation.
+    """
+    recorded_at = created_at  # Use the passed timestamp as the recorded_at value
+    allergy = allergies.strip().lower()  # Normalize allergy name
 
-        # Get the ID of the newly inserted patient
-        clinical_history_and_physical_patient_occupations_id = cursor.lastrowid
-        print(f"Admission_form created successfully with ID: {clinical_history_and_physical_patient_occupations_id}")
-        
-    except Error as e:
+    try:
+        # Query to check if the allergy exists in the allergens database
+        query_allergen_id = "SELECT id FROM allergens WHERE unique_identifier = %s"
+        cursor.execute(query_allergen_id, (allergy,))
+        result = cursor.fetchone()
+
+        if result:
+            # If the allergen exists, insert into the allergies table
+            allergen_id = result[0]
+            query = """
+                INSERT INTO allergies (patient_id, allergen_id, recorded_at, start_date)
+                VALUES (%s, %s, %s, %s)
+            """
+            cursor.execute(query, (patient_id, allergen_id, recorded_at, recorded_at))  # Assuming start_date = recorded_at
+            conn.commit()
+
+            allergies_id = cursor.lastrowid
+            print(f"Allergy record created successfully with ID: {allergies_id}")
+        else:
+            # If the allergen does not exist, insert it as a failed allergen
+            failed_allergen_id = 9  # ID for unknown allergens
+            query = """
+                INSERT INTO allergies (patient_id, allergen_id, other, recorded_at, start_date)
+                VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(query, (patient_id, failed_allergen_id, allergy, recorded_at, recorded_at))  # Assuming start_date = recorded_at
+            conn.commit()
+
+            allergies_id = cursor.lastrowid
+            print(f"Unknown allergen record created successfully with ID: {allergies_id}")
+    except Exception as e:
         print(f"Error: {e}")
+
+
+
+def create_occupation(create_clinical_history_and_physical_id, occupation, conn, cursor):
+    """
+    Function to create an occupation record for a clinical history and physical entry.
+    Args:
+        create_clinical_history_and_physical_id: ID of the clinical history and physical entry.
+        occupation: Name of the occupation (string).
+        conn: Database connection object.
+        cursor: Database cursor object.
+    """
+    occupation = occupation.strip().lower()  # Normalize the occupation name
+
+    try:
+        # Query to check if the occupation exists in the database
+        query_occupation_id = "SELECT id FROM occupations WHERE name = %s"
+        cursor.execute(query_occupation_id, (occupation,))
+        result = cursor.fetchone()
+
+        if result:
+            # If the occupation exists, insert into the clinical history table
+            occupation_id = result[0]
+            query = """
+                INSERT INTO clinical_history_and_physical_patient_occupations (create_clinical_history_and_physical_id, occupation_id)
+                VALUES (%s, %s)
+            """
+            cursor.execute(query, (create_clinical_history_and_physical_id, occupation_id))
+            conn.commit()
+
+            record_id = cursor.lastrowid
+            print(f"Occupation record created successfully with ID: {record_id}")
+        else:
+            # If the occupation does not exist, insert it as a detail
+            query = """
+                INSERT INTO clinical_history_and_physical_patient_occupations (create_clinical_history_and_physical_id, detail)
+                VALUES (%s, %s)
+            """
+            cursor.execute(query, (create_clinical_history_and_physical_id, occupation))
+            conn.commit()
+
+            record_id = cursor.lastrowid
+            print(f"Unknown occupation record created successfully with ID: {record_id}")
+    except Exception as e:
+        print(f"Error: {e}")
+
+
 
 def create_pshx(clinical_history_and_physical_id,pshx_value ,conn, cursor ):
     other = pshx_value
@@ -338,65 +265,47 @@ def create_pmhx(clinical_history_and_physical_id, PMHX, conn, cursor):
         print(f"Error: {e}")
 
 
-
-contraception_dict = {
-    1: "Caps",
-    2: "Combined pill",
-    3: "Condoms (female)",
-    4: "Condoms (male)",
-    5: "Contraceptive Implant" ,
-    6: "Contraceptive Injection" ,
-    7: "Contraceptive Patch",
-    8: "Diaphragms",
-    9: "Intrauterine Device (IUD)",
-    10: "Intrauterine System (IUD)",
-    11: "Natural Family Planning",
-    12: "Progestogen-only Pill",
-    13: "Vaginal Ring",
-    14: "Nil"
-}
-
-
-def create_contraception(clinical_history_and_physical_id, contraception, contraception_disc ,conn, cursor):######Create contraception_disc
-    
-    # Search for a match in the occupations_dict
-    for contaception_method_id, contraception_name in contraception_disc.items():
-        if contraception.strip().lower() == contraception_name.lower():
-             # occupation_id Ready to be used.
-            query = """
-            INSERT INTO clinical_history_and_physical_patient_contraception (clinical_history_and_physical_id, contraception_method_id)
-            VALUES (%s, %s)
-            """
-            try:
-                cursor.execute(query, (clinical_history_and_physical_id,contaception_method_id))
-    
-                 # Commit the transaction
-                conn.commit()
-
-                # Get the ID of the newly inserted patient
-                clinical_history_and_physical_patient_occupations_id = cursor.lastrowid
-                print(f"Admission_form created successfully with ID: {clinical_history_and_physical_patient_occupations_id}")
-        
-            except Error as e:
-                print(f"Error: {e}")
-            
-    
-    # If no match is found, return empty ID and unmatched value in details
-    query = """
-    INSERT INTO clinical_history_and_physical_patient_contraception (create_clinical_history_and_physical_id, detail)
-    VALUES (%s, %s)
+def create_contraception(clinical_history_and_physical_id, contraception, conn, cursor):
     """
-    try:
-        cursor.execute(query, (clinical_history_and_physical_id, contraception))
-    
-         # Commit the transaction
-        conn.commit()
+    Function to create a contraception record for a clinical history and physical entry.
+    Args:
+        clinical_history_and_physical_id: ID of the clinical history and physical entry.
+        contraception: Name of the contraception method (string).
+        conn: Database connection object.
+        cursor: Database cursor object.
+    """
+    contraception = contraception.strip().lower()  # Normalize the contraception name
 
-        # Get the ID of the newly inserted patient
-        clinical_history_and_physical_patient_occupations_id = cursor.lastrowid
-        print(f"Admission_form created successfully with ID: {clinical_history_and_physical_patient_occupations_id}")
-        
-    except Error as e:
+    try:
+        # Query to check if the contraception method exists in the database
+        query_contraception_id = "SELECT id FROM contraception_methods WHERE name = %s"
+        cursor.execute(query_contraception_id, (contraception,))
+        result = cursor.fetchone()
+
+        if result:
+            # If the contraception method exists, insert into the clinical history table
+            contraception_method_id = result[0]
+            query = """
+                INSERT INTO clinical_history_and_physical_patient_contraception (clinical_history_and_physical_id, contraception_method_id)
+                VALUES (%s, %s)
+            """
+            cursor.execute(query, (clinical_history_and_physical_id, contraception_method_id))
+            conn.commit()
+
+            record_id = cursor.lastrowid
+            print(f"Contraception record created successfully with ID: {record_id}")
+        else:
+            # If the contraception method does not exist, insert it as a detail
+            query = """
+                INSERT INTO clinical_history_and_physical_patient_contraception (clinical_history_and_physical_id, detail)
+                VALUES (%s, %s)
+            """
+            cursor.execute(query, (clinical_history_and_physical_id, contraception))
+            conn.commit()
+
+            record_id = cursor.lastrowid
+            print(f"Unknown contraception method record created successfully with ID: {record_id}")
+    except Exception as e:
         print(f"Error: {e}")
 
 
@@ -420,16 +329,8 @@ def create_gtpals(clinical_history_and_physical_id, G, T, P, A, L, description, 
 
 
 
-def get_sdpr_patient_id(patient_unique_id, conn, cursor):
-    """
-    Fetches the sdpr_patient_id for a given unique patient identifier.
-    
-    Args:
-        patient_unique_id (str): The unique identifier for the patient (e.g., name, patient ID).
-    
-    Returns:
-        int: The sdpr_patient_id if found, or None if the patient does not exist.
-    """
+def get_sdpr_patient_id(patient_unique_id,  cursor):# no need for conn, no commit required
+
     try:
         # Query to get the sdpr_patient_id
         query_patient_id = "SELECT id FROM sdpr_patient WHERE unique_identifier = %s"  # Adjust column name
@@ -495,8 +396,8 @@ def create_past_gyne_surg(patient_id,created_at,updated_at ,prev_gyn_surg, conn,
     procedure_catagory_id = 29
     cancelled = 0
     other = prev_gyn_surg
-    start_date = datetime.now()
-    end_date = datetime.now()
+    start_date = created_at# Returns a formatted time string
+    end_date = created_at# Returns a formatted time string
 
     # first the procedure gets added to the database.
     query = """
@@ -670,8 +571,15 @@ def importing_data_from_stapleton_file(file_path):
             assessment = row['Assessment:']
             plan = row['Plan']
             dr_name = row['Dr name']
-            created_at = datetime.now()
-            updated_at = datetime.now()
+
+
+            #time modification to the normal format
+
+            current_time = datetime.now()
+            formatted_time = current_time.strftime('%Y-%m-%d %H:%M:%S')
+
+            created_at = formatted_time
+            updated_at = formatted_time
 
             merged = row['merged']
             organisation_id = "1" #######, organisation id hard coded for now, for this one use case.
@@ -697,13 +605,13 @@ def importing_data_from_stapleton_file(file_path):
             create_allergies(patient_id ,allergies, allergens_dict)
 
             # Creates the Occupation record
-            create_occupation(clinical_history_and_physical_id, occupation, occupations_dict)
+            create_occupation(clinical_history_and_physical_id, occupation, )
 
             # Creates the pmhx record
             create_pmhx(clinical_history_and_physical_id, pmhx)
 
             # Creates the Contraception record
-            create_contraception(clinical_history_and_physical_id, contraception, contraception_dict)
+            create_contraception(clinical_history_and_physical_id, contraception,)
             
             # Creates the GTPALS records
             create_gtpals(clinical_history_and_physical_id, g, t, p, a, l, births)
