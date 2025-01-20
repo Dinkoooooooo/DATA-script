@@ -7,11 +7,25 @@ import csv
 import mysql.connector
 from mysql.connector import Error
 import datetime
-
+import argparse
 
 #Create_patient()# save id
 #Create_vist()# None.
 #Create_admissionn_note()# save id
+
+
+# Set up the argument parser
+parser = argparse.ArgumentParser(description="Process user ID from the command line.")
+parser.add_argument('user_id', type=str, help="The User ID to be processed")
+
+# Parse the command-line arguments
+args = parser.parse_args()
+
+# Assign the user_id from the command-line argument
+user_id = args.user_id
+
+
+
 
 def create_patient(Folder_number,Id_number,First_name,last_name,title,dob,Gender,created_at,updated_at,merged,organisation_id,canonical, conn, cursor):#open connection before, or after this runs, check with mike.
     query = """
@@ -57,7 +71,7 @@ def create_admission_forms(patient_id,created_at,updated_at, conn, cursor):
 
 
 def create_clinical_history_and_physical(user_id, patient_id,admission_form_id, conn, cursor, created_at,updated_at):
-    user_id = 12345 ############################################################# Update user_id with the correct one mike gives.
+
     signed_off = 0
     time_for_import = created_at # created_at , returns a formatted time, which can be used for the other values
     recorded_at = time_for_import
@@ -517,14 +531,14 @@ def create_rxhx(patient_id, drug_name,start_date,end_date,is_surgical_prophylaxi
 
 file_path = None #this will be stapletons export file.
 
-def importing_data_from_stapleton_file(file_path):
+def importing_data_from_stapleton_file(user_id,file_path):
     # Open the CSV file
     with open(file_path, mode='r', newline='', encoding='utf-8') as csv_file:
         csv_reader = csv.DictReader(csv_file)
     
         # Loop through each row in the CSV
         for row_number, row in enumerate(csv_reader, start=1):
-        
+            
 
             title = row['Title']
             name_last = row['Name Last']
@@ -595,7 +609,7 @@ def importing_data_from_stapleton_file(file_path):
             admission_form_id = create_admission_forms(patient_id,created_at,updated_at)
 
             # Create the clinical_history_and_physical_id record and store the clinical_history_and_physical_id
-            clinical_history_and_physical_id = create_clinical_history_and_physical(patient_id,admission_form_id)
+            clinical_history_and_physical_id = create_clinical_history_and_physical(patient_id,admission_form_id,user_id)
 
 
             # Creates the ongoing_problems record
