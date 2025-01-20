@@ -120,25 +120,7 @@ def create_ongoing_problems(clinical_history_and_physical_id,Problem_list , conn
     except Error as e:
         print(f"Error: {e}")
 
-allergens_dict = {
-    1: "Penicillin",
-    2: "Sulfa drugs", 
-    3: "Tetracycline",
-    4: "Codeine",
-    5: "Non-steroidal anti-inflammatory drugs (NSAIDs)",
-    6: "Phenytoin", 
-    7: "Carbamazepine",
-    8: "Rubber",
-    9: "Other",
-    10: "lodine",
-    11: "Bee stings",
-    12: "Seafood",
-    13: "Latex",
-    14: "Elastoplast",
-    15: "Asprin",
-    16: "Lanzor",
-    17: "Local anaesthetics"
-}
+
 
 def create_allergies(patient_id, allergies, conn, cursor, created_at):
     """
@@ -616,7 +598,7 @@ def importing_data_from_stapleton_file(user_id,file_path):
             create_ongoing_problems(clinical_history_and_physical_id, problem_list)
 
             # Creates the allergies record
-            create_allergies(patient_id ,allergies, allergens_dict)
+            create_allergies(patient_id ,allergies)
 
             # Creates the Occupation record
             create_occupation(clinical_history_and_physical_id, occupation, )
