@@ -24,6 +24,37 @@ Ensure that the Test.csv file exists in the directory where the script is execut
    
 Replace the placeholders in the database connection (host, database, user, password) in the `Main_function` with the correct credentials for your `MySQL database`.
 
+# CSV File Format
+
+The CSV file must include the following headers. Each column corresponds to a field in the database and is used by specific functions in the code.
+
+| **Header**        | **Used In Function**                       | **Purpose**                                                                 |
+|--------------------|--------------------------------------------|-----------------------------------------------------------------------------|
+| `Title`           | `create_patient`                          | Used for the `title` field in the `patients` table.                        |
+| `Name Last`       | `create_patient`                          | Maps to `last_name` in the `patients` table.                               |
+| `Name First`      | `create_patient`                          | Maps to `First_name` in the `patients` table.                              |
+| `ID`              | `create_patient`, `get_sdpr_patient_id`   | Used as `Id_number` for `patients` and `unique_identifier` for `sdpr_patient`. |
+| `DOB`             | `create_patient`                          | Used for the `dob` field in the `patients` table.                          |
+| `Gender`          | `create_patient`                          | Used for the `Gender` field in the `patients` table.                       |
+| `Contraception`   | `create_contraception`                    | Maps to `contraception` for contraception methods.                         |
+| `Occupation`      | `create_occupation`                       | Maps to `occupation` for the `clinical_history_and_physical_patient_occupations` table. |
+| `Allergies`       | `create_allergies`                        | Contains allergy data to be linked with `allergens`.                       |
+| `SocialHx:`       | `create_socialhx`                         | Maps to `social_hx` for social history records.                            |
+| `FamilyHx:`       | `create_familyhx`                         | Maps to `family_hx` for family history records.                            |
+| `PMHx`            | `create_pmhx`                             | Used for past medical history (`other` field in `pmhx_options`).           |
+| `PSHx`            | `create_pshx`                             | Maps to surgical history records (`other` field in past surgical procedures). |
+| `RxHx`            | `create_rxhx`                             | Used for the `drug_name` field in `patient_drugs`.                         |
+| `Problem list`    | `create_ongoing_problems`                 | Maps to `Problem_list` in ongoing problems.                                |
+| `G`               | `create_gtpals`                           | Maps to `gravida` in obstetric history.                                    |
+| `T`               | `create_gtpals`                           | Maps to `term` in obstetric history.                                       |
+| `P`               | `create_gtpals`                           | Maps to `preterm` in obstetric history.                                    |
+| `A`               | `create_gtpals`                           | Maps to `abortions` in obstetric history.                                  |
+| `L`               | `create_gtpals`                           | Maps to `living_children` in obstetric history.                            |
+| `births`          | `create_gtpals`                           | Maps to the `description` field for obstetric history.                     |
+| `prev. gyn surg.` | `create_past_gyne_surg`                   | Used for past gynecological surgeries (`other` field).                     |
+
+
+
 # BreakDown
 
 1. `create_patient`
