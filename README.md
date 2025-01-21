@@ -209,8 +209,11 @@ After the file processing completes, it closes the cursor and the database conne
 Implements a try-finally block for error handling and cleanup.
 
 17. `importing_data_from_stapleton_file`
+
 Purpose:
+
 Processes patient data from a CSV file (specified by file_path), creates records in various tables, and maintains relationships between the records.
+
 How it works:
 
 1.Opens the CSV File:
