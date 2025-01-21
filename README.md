@@ -1,12 +1,13 @@
 # DATA-script
 For Importing,pms data to bb 
 
+#Note, need to update sql server details when used.
+
 `User_id is added with a command line argument` so 
 
 Command line:
 
 `python process_user_id.py 12345`
-
 
 1. Ensure Required Dependencies
 Install mysql-connector-python if not already installed:
