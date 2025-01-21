@@ -199,4 +199,5 @@ Handles Relationships:
 Functions like get_sdpr_patient_id ensure data is correctly linked by fetching IDs from other tables (e.g., sdpr_patient).
 
 5.Error Handling:
+
 Includes safeguards in each function to handle database errors gracefully and print diagnostic messages.
