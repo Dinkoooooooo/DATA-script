@@ -1,7 +1,7 @@
 # DATA-script
 For Importing,pms data to bb 
 
-`User_id is added with a command line argument` so `python process_user_id.py "12345"`
+`User_id is added with a command line argument` so `python process_user_id.py 12345`
 
 
 1. Ensure Required Dependencies
