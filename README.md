@@ -153,3 +153,50 @@ Checks if the drug exists in the drugs table using unique_identifier.
 If found, it adds the drug_id to patient_drugs for the specified patient.
 If not, it uses a default drug_id to log unknown drugs.
 Captures additional fields like start_date, end_date, and whether it is for surgical prophylaxis.
+
+17. `Main_function`
+Purpose:
+
+Serves as the entry point for the script. It establishes the database connection, initializes the cursor, and invokes importing_data_from_stapleton_file.
+
+How it works:
+
+Attempts to connect to the MySQL database using the mysql.connector.connect() method with the provided credentials (host, database, user, password).
+
+If the connection is successful:
+
+Initializes the cursor for executing SQL queries.
+
+Calls importing_data_from_stapleton_file with the database connection (conn) and cursor as arguments.
+
+After the file processing completes, it closes the cursor and the database connection, ensuring resources are properly released.
+Implements a try-finally block for error handling and cleanup.
+
+18. `importing_data_from_stapleton_file`
+Purpose:
+Processes patient data from a CSV file (specified by file_path), creates records in various tables, and maintains relationships between the records.
+How it works:
+
+1.Opens the CSV File:
+
+Reads the CSV using Python's csv.DictReader, which treats the first row as headers and parses subsequent rows into dictionaries.
+
+2.Loops Through Each Row:
+
+Extracts values from the CSV (e.g., title, dob, gender) and formats them for database insertion.
+Generates created_at and updated_at timestamps using datetime.now().
+
+3.Calls Record-Creation Functions in Sequence:
+
+Patient: Calls create_patient to insert a new patient and retrieve the patient_id.
+Admission Form: Calls create_admission_forms using the patient_id.
+Clinical History and Physical: Calls create_clinical_history_and_physical to create a record tied to the patient and admission form, retrieving the clinical_history_and_physical_id.
+
+4.Additional Records:
+
+Calls various functions (e.g., create_allergies, create_occupation, create_socialhx) to insert related data like allergies, occupation, and family history.
+Handles Relationships:
+Functions like get_sdpr_patient_id ensure data is correctly linked by fetching IDs from other tables (e.g., sdpr_patient).
+
+5.Error Handling:
+Includes safeguards in each function to handle database errors gracefully and print diagnostic messages.
