@@ -6,7 +6,7 @@
 import csv
 import mysql.connector
 from mysql.connector import Error
-import datetime
+from datetime import datetime
 import argparse
 
 #Create_patient()# save id
@@ -387,58 +387,52 @@ def create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx, conn, cu
         print(f"Error: {e}")
 
 
-def create_past_gyne_surg(patient_id,created_at,updated_at ,prev_gyn_surg, conn, cursor):
+def create_past_gyne_surg(patient_id, created_at, updated_at, prev_gyn_surg, conn, cursor):
     procedure_type_id = 1041
     procedure_catagory_id = 29
     cancelled = 0
     other = prev_gyn_surg
-    start_date = created_at# Returns a formatted time string
-    end_date = created_at# Returns a formatted time string
+    start_date = created_at  # Returns a formatted time string
+    end_date = created_at  # Returns a formatted time string
 
-    # first the procedure gets added to the database.
-    query = """
-    INSERT INTO procedures (patient_id, start_date ,end_date ,procedure_type_id, procedure_catagory_id,  other, cancelled, created_at, updated_at)
-    VALUES (%s, %s, %s, %s, %s, %s)
+    # First, add the procedure to the database
+    query_procedure = """
+    INSERT INTO procedures (patient_id, start_date, end_date, procedure_type_id, procedure_catagory_id, other, cancelled, created_at, updated_at)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     try:
-        cursor.execute(query, (patient_id, start_date ,end_date ,procedure_type_id,procedure_catagory_id,  other,  cancelled, created_at, updated_at))
-    
-         # Commit the transaction
+        cursor.execute(query_procedure, (patient_id, start_date, end_date, procedure_type_id, procedure_catagory_id, other, cancelled, created_at, updated_at))
         conn.commit()
-
-        # Get the ID of the newly inserted patient
+        # Get the ID of the newly inserted procedure
         procedure_id = cursor.lastrowid
-        print(f"Admission_form created successfully with ID: {procedure_id}")
-        return procedure_id
-        
+        print(f"Procedure created successfully with ID: {procedure_id}")
     except Error as e:
-        print(f"Error: {e}")
-   
-    
+        print(f"Error inserting procedure: {e}")
+        return  # Exit the function to avoid referencing `procedure_id` if the insertion fails
+
+    # Now, add the surgery to the database
     drains = 0
     unscheduled_return = 0
     incomplete = 0
-    query = """
-    INSERT INTO surgeries (procedure_id,created_at,updated_at,drains,cancelled, unscheduled_return,incomplete)
-    VALUES (%s, %s, %s, %s, %s, %s)
+    query_surgery = """
+    INSERT INTO surgeries (procedure_id, created_at, updated_at, drains, cancelled, unscheduled_return, incomplete)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
     try:
-        cursor.execute(query, (procedure_id,created_at,updated_at,drains,cancelled, unscheduled_return,incomplete))
-    
-         # Commit the transaction
+        cursor.execute(query_surgery, (procedure_id, created_at, updated_at, drains, cancelled, unscheduled_return, incomplete))
         conn.commit()
-
-        # Get the ID of the newly inserted patient
+        # Get the ID of the newly inserted surgery
         surgery_id = cursor.lastrowid
-        print(f"Admission_form created successfully with ID: {surgery_id}")
-        
-        
+        print(f"Surgery created successfully with ID: {surgery_id}")
     except Error as e:
-        print(f"Error: {e}")
+        print(f"Error inserting surgery: {e}")
 
     
-def create_rxhx(patient_id, drug_name,start_date,end_date,is_surgical_prophylaxis,created_at,updated_at,mark, conn, cursor):# this still has to be worked on , reppurosed database check function
+def create_rxhx(patient_id, rxhx ,created_at,updated_at, conn, cursor):# this still has to be worked on , reppurosed database check function
     mark = 0
+    drug_name = rxhx
+    start_date = created_at
+    end_date = created_at
     is_surgical_prophylaxis = 0
     """
     Fetches the drugs for a given unique patient identifier.
@@ -511,9 +505,9 @@ def create_rxhx(patient_id, drug_name,start_date,end_date,is_surgical_prophylaxi
 
 #Theres still more to do, but untill i figure it out, lemme work on how the the PROCESS works.
 
-file_path = None #this will be stapletons export file.
+file_path = "tester.csv" #this will be stapletons export file.
 
-def importing_data_from_stapleton_file(user_id,file_path):
+def importing_data_from_stapleton_file(user_id,file_path, conn, cursor):
     # Open the CSV file
     with open(file_path, mode='r', newline='', encoding='utf-8') as csv_file:
         csv_reader = csv.DictReader(csv_file)
@@ -523,19 +517,20 @@ def importing_data_from_stapleton_file(user_id,file_path):
             
 
             title = row['Title']
-            name_last = row['Name Last']
-            name_first = row['Name First']
+            print(row.keys())
+            name_last = row['Namelast']
+            name_first = row['NameFirst']
             id_number = row['ID'] ######### When creating the export try to merge in the id number - this is required for the patient table.
             dob = row['DOB'] ###### When creating the export try to merge in the DOB  - this is required for the patient table.
             gender = row['Gender'] ###### When creating the export try to merge in the gender - this is required for the patient table.
             contraception = row['Contraception'] ######## when creating the export try to merge in the Contraception - this is required for the Contraception table.
-            partner = row['partner']
-            referral = row['Referral']
-            med_aid = row['Med.Aid']
-            folder_number = row['Folder #']
-            salutation = row['Salutation']
-            age_calc = row['Age calc']
-            lmp = row['LMP:']
+            #partner = row['partner']
+            #referral = row['Referral']
+            #med_aid = row['Med.Aid']
+            folder_number = row['FolderNumber']
+            #salutation = row['Salutation']
+            #age_calc = row['Age calc']
+            #lmp = row['LMP:']
             occupation = row['Occupation']
             allergies = row['Allergies']
             social_hx = row['SocialHx:']
@@ -543,30 +538,30 @@ def importing_data_from_stapleton_file(user_id,file_path):
             pmhx = row['PMHx']
             pshx = row['PSHx']
             rxhx = row['RxHx']
-            problem_list = row['Problem list']
-            confidential = row['Confidential']
+            problem_list = row['Problemlist']
+            #confidential = row['Confidential']
             g = row['G']
             t = row['T']
             p = row['P']
             a = row['A']
             l = row['L']
             births = row['births'] # GTPALs description
-            prev_gyn_surg = row['prev. gyn surg.']
-            problem_1 = row['Problem 1']
-            hx_problem = row['Hx problem']
-            temp = row['Temp']
-            pulse = row['Pulse']
-            bp = row['B.P.']
-            waist_circ = row['WaistCirc']
-            weight = row['Weight']
-            height = row['Height']
-            bmi = row['BMI']
-            general_exam = row['General exam.']
-            investigations = row['Investigations']
-            ultrasound = row['ultrasound']
-            assessment = row['Assessment:']
-            plan = row['Plan']
-            dr_name = row['Dr name']
+            prev_gyn_surg = row['prev.gynsurg.']
+            #problem_1 = row['Problem1']
+            #hx_problem = row['Hxproblem']
+            #temp = row['Temp']
+            #pulse = row['Pulse']
+            #bp = row['B.P.']
+            #waist_circ = row['WaistCirc']
+            #weight = row['Weight']
+            #height = row['Height']
+            #bmi = row['BMI']
+            #general_exam = row['Generalexam.']
+            #investigations = row['Investigations']
+            #ultrasound = row['ultrasound']
+            #assessment = row['Assessment:']
+            #plan = row['Plan']
+            #dr_name = row['Drname']
 
 
             #time modification to the normal format
@@ -577,78 +572,78 @@ def importing_data_from_stapleton_file(user_id,file_path):
             created_at = formatted_time
             updated_at = formatted_time
 
-            merged = row['merged']
-            organisation_id = "1" #######, organisation id hard coded for now, for this one use case.
+            merged = "0"
+            organisation_id = "67571" #######, organisation id hard coded for now, for this one use case.
             canonical = "1"
 
 
 
             #These store ID's that would be used in the other tables.
             # Create the patient record and store the patient_id
-            patient_id = create_patient(folder_number,id_number,name_first,name_last,title,dob,gender,created_at,updated_at,merged,organisation_id,canonical)
+            patient_id = create_patient(folder_number,id_number,name_first,name_last,title,dob,gender,created_at,updated_at,merged,organisation_id,canonical,conn,cursor)
 
             # Create the admission_form record and store the admission_form_id
-            admission_form_id = create_admission_forms(patient_id,created_at,updated_at)
+            admission_form_id = create_admission_forms(patient_id,created_at,updated_at,conn,cursor)
 
             # Create the clinical_history_and_physical_id record and store the clinical_history_and_physical_id
-            clinical_history_and_physical_id = create_clinical_history_and_physical(patient_id,admission_form_id,user_id)
+            clinical_history_and_physical_id = create_clinical_history_and_physical(user_id, patient_id,admission_form_id, conn, cursor, created_at,updated_at)
 
 
             # Creates the ongoing_problems record
-            create_ongoing_problems(clinical_history_and_physical_id, problem_list)
+            create_ongoing_problems(clinical_history_and_physical_id, problem_list,conn,cursor)
 
             # Creates the allergies record
-            create_allergies(patient_id ,allergies)
+            create_allergies(patient_id ,allergies,conn,cursor,created_at)
 
             # Creates the Occupation record
-            create_occupation(clinical_history_and_physical_id, occupation, )
+            create_occupation(clinical_history_and_physical_id, occupation,conn,cursor)
 
             # Creates the pmhx record
-            create_pmhx(clinical_history_and_physical_id, pmhx)
+            create_pmhx(clinical_history_and_physical_id, pmhx,conn,cursor)
 
             # Creates the Contraception record
-            create_contraception(clinical_history_and_physical_id, contraception,)
+            create_contraception(clinical_history_and_physical_id, contraception,conn,cursor)
             
             # Creates the GTPALS records
-            create_gtpals(clinical_history_and_physical_id, g, t, p, a, l, births)
+            create_gtpals(clinical_history_and_physical_id, g, t, p, a, l, births,conn,cursor)
 
             # Creates pshx record
-            create_pshx(clinical_history_and_physical_id,pshx )
+            create_pshx(clinical_history_and_physical_id,pshx,conn,cursor )
 
             # Creates the sdpr_patient_id value for social_hx and Family Hx
-            sdpr_patient_id = get_sdpr_patient_id(id_number)
+            sdpr_patient_id = get_sdpr_patient_id(id_number,cursor)
 
             # Creates the social_hx record
-            create_socialhx(created_at, updated_at, sdpr_patient_id ,social_hx)
+            create_socialhx(created_at, updated_at, sdpr_patient_id ,social_hx,conn,cursor)
 
             # Creates the family_hx record
-            create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx)
+            create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx,conn,cursor)
 
             # Creates the past gyne surg record
-            create_past_gyne_surg(patient_id,created_at,updated_at ,prev_gyn_surg )
+            create_past_gyne_surg(patient_id,created_at,updated_at ,prev_gyn_surg ,conn,cursor)
 
-            create_rxhx(patient_id, rxhx,created_at ,updated_at)
-
+            create_rxhx(patient_id, rxhx ,created_at,updated_at, conn, cursor)
 # Down here, you want to create a make it run, the connection to the database and the tables. then between you are gonna want to add the importing patient data function.
 
 
 def Main_function():
     conn = None  # Declare the connection object
     cursor = None  # Declare the cursor object
-    file_path = "Test.csv"
+    file_path = "tester.csv"
     # Create the database connection
     try:
         # Establish the database connection
         conn = mysql.connector.connect(
-            host='your_host',
-            database='your_db',
-            user='your_user',
-            password='your_password'
+            host='',
+            port='',
+            database='',
+            user='',
+            password=''
         )
         
         # Initialize the cursor
         cursor = conn.cursor() 
-        importing_data_from_stapleton_file(file_path, conn, cursor)
+        importing_data_from_stapleton_file(user_id,file_path, conn, cursor)
 
     except Error as e:
         print(f"Error to connect to MySQL database")
