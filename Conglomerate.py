@@ -29,7 +29,7 @@ user_id = args.user_id
 
 def create_patient(Folder_number,Id_number,First_name,last_name,title,dob,Gender,created_at,updated_at,merged,organisation_id,canonical, conn, cursor):#open connection before, or after this runs, check with mike.
     query = """
-        INSERT INTO patients (Folder_number, Id_number, First_name, last_name, title, dob, Gender, created_at, updated_at, merged, organisation_id, canonical)
+        INSERT INTO patients (folder, Id_number, First_name, last_name, title, dob, Gender, created_at, updated_at, merged, organisation_id, canonical)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
     try:
@@ -82,7 +82,7 @@ def create_clinical_history_and_physical(user_id, patient_id,admission_form_id, 
 
 
     query = """
-    INSERT INTO clinical_history_and_physicals (user_id, patient_id, recorded_at, signed_off, created_at, updated_at, note_catagory_id, admission_form_id)
+    INSERT INTO clinical_history_and_physicals (user_id, patient_id, recorded_at, signed_off, created_at, updated_at, note_category_id, admission_form_id)
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """
     try:
@@ -104,7 +104,7 @@ def create_clinical_history_and_physical(user_id, patient_id,admission_form_id, 
 
 def create_ongoing_problems(clinical_history_and_physical_id,Problem_list , conn, cursor):
     query = """
-    INSERT INTO clinical_history_and_physical_patient_ongoing_problems (clinical_history_and_physical_id, Problem_list)
+    INSERT INTO clinical_history_and_physical_patient_ongoing_problems (clinical_history_and_physical_id,name)
     VALUES (%s, %s)
     """
     try:
@@ -137,7 +137,7 @@ def create_allergies(patient_id, allergies, conn, cursor, created_at):
 
     try:
         # Query to check if the allergy exists in the allergens database
-        query_allergen_id = "SELECT id FROM allergens WHERE unique_identifier = %s"
+        query_allergen_id = "SELECT id FROM allergens WHERE name = %s"
         cursor.execute(query_allergen_id, (allergy,))
         result = cursor.fetchone()
 
@@ -191,7 +191,7 @@ def create_occupation(create_clinical_history_and_physical_id, occupation, conn,
             # If the occupation exists, insert into the clinical history table
             occupation_id = result[0]
             query = """
-                INSERT INTO clinical_history_and_physical_patient_occupations (create_clinical_history_and_physical_id, occupation_id)
+                INSERT INTO clinical_history_and_physical_patient_occupations (clinical_history_and_physical_id, occupation_id)
                 VALUES (%s, %s)
             """
             cursor.execute(query, (create_clinical_history_and_physical_id, occupation_id))
@@ -220,7 +220,7 @@ def create_pshx(clinical_history_and_physical_id,pshx_value ,conn, cursor ):
     default_value = 12
 
     query = """
-    INSERT INTO clinical_history_and_physical_past_surgical_procedure (clinical_history_and_physical_id, procedure_type_id, other)
+    INSERT INTO clinical_history_and_physical_past_surgical_procedures (clinical_history_and_physical_id, procedure_type_id, other)
     VALUES (%s, %s, %s)
     """
     try:
@@ -307,7 +307,7 @@ def create_contraception(clinical_history_and_physical_id, contraception, conn, 
 
 def create_gtpals(clinical_history_and_physical_id, G, T, P, A, L, description,  conn, cursor): 
     query = """
-    INSERT INTO clinical_history_and_physical_patient_contraception (clinical_history_and_physical_id, gravida, term, preterm, abortions, living_children, description)
+    INSERT INTO clinical_history_and_physical_contraceptions (clinical_history_and_physical_id, gravida, term, preterm, abortions, living_children, description)
     VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
     try:
@@ -329,7 +329,7 @@ def get_sdpr_patient_id(patient_unique_id,  cursor):# no need for conn, no commi
 
     try:
         # Query to get the sdpr_patient_id
-        query_patient_id = "SELECT id FROM sdpr_patient WHERE unique_identifier = %s"  # Adjust column name
+        query_patient_id = "SELECT id FROM sdpr_patient WHERE id_number = %s"  # Adjust column name
         cursor.execute(query_patient_id, (patient_unique_id,))
         result = cursor.fetchone()
 
@@ -397,7 +397,7 @@ def create_past_gyne_surg(patient_id, created_at, updated_at, prev_gyn_surg, con
 
     # First, add the procedure to the database
     query_procedure = """
-    INSERT INTO procedures (patient_id, start_date, end_date, procedure_type_id, procedure_catagory_id, other, cancelled, created_at, updated_at)
+    INSERT INTO procedures (patient_id, start_date, end_date, procedure_type_id,procedure_category_id, other, cancelled, created_at, updated_at)
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     try:
@@ -445,7 +445,7 @@ def create_rxhx(patient_id, rxhx ,created_at,updated_at, conn, cursor):# this st
     """
     try:
         # Query to check the drugfrom the pms , if its in the database.
-        query_drug_id = "SELECT id FROM drugs WHERE unique_identifier = %s"  # Adjust column name
+        query_drug_id = "SELECT id FROM drugs WHERE name = %s"  # Adjust column name
         cursor.execute(query_drug_id, (drug_name,))
         result = cursor.fetchone()
 
