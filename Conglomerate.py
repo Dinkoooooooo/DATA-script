@@ -28,12 +28,28 @@ user_id = args.user_id
 
 
 def create_patient(Folder_number,Id_number,First_name,last_name,title,dob,Gender,created_at,updated_at,merged,organisation_id,canonical, conn, cursor):#open connection before, or after this runs, check with mike.
+    
+    # Time manipulation
+    input_date = dob
+    parsed_date = datetime.strptime(input_date.strip(), "%d/%m/%Y")
+    pdob = parsed_date.strftime("%Y/%m/%d")
+
+    # Gender determination
+
+    if Gender.lower() == "m":
+        pGender = "0"
+    elif Gender.lower() == "f":
+        pGender = "1"
+    else:
+        pGender = "2"
+
+
     query = """
-        INSERT INTO patients (folder, Id_number, First_name, last_name, title, dob, Gender, created_at, updated_at, merged, organisation_id, canonical)
+        INSERT INTO patients (folder, Id_number, First_name, last_name, title, date_of_birth, Gender, created_at, updated_at, merged, organisation_id, canonical)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
     try:
-        cursor.execute(query, (Folder_number, Id_number, First_name, last_name, title, dob, Gender, created_at, updated_at, merged, organisation_id, canonical))
+        cursor.execute(query, (Folder_number, Id_number, First_name, last_name, title, pdob, pGender, created_at, updated_at, merged, organisation_id, canonical))
 
     # Commit the transaction
         conn.commit()
@@ -45,7 +61,7 @@ def create_patient(Folder_number,Id_number,First_name,last_name,title,dob,Gender
         return patient_id # returns the id for use in the next functions.
 
     except Error as e:
-        print(f"Error: {e}")
+        print(f"Error patient not created: {e}")
 
 def create_admission_forms(patient_id,created_at,updated_at, conn, cursor):
 
@@ -66,7 +82,7 @@ def create_admission_forms(patient_id,created_at,updated_at, conn, cursor):
         return admission_form_id # returns the id for use in the next functions.
 
     except Error as e:
-        print(f"Error: {e}")
+        print(f"Error Admission form not created: {e}")
 
 
 
@@ -93,12 +109,12 @@ def create_clinical_history_and_physical(user_id, patient_id,admission_form_id, 
 
     # Get the ID of the newly inserted patient
         clinical_history_and_physical_id = cursor.lastrowid
-        print(f"Admission_form created successfully with ID: {clinical_history_and_physical_id}")
+        print(f"create_clinical_history_and_physical created successfully with ID: {clinical_history_and_physical_id}")
         
         return clinical_history_and_physical_id # returns the id for use in the next functions.
 
     except Error as e:
-        print(f"Error: {e}")
+        print(f"Error create_clinical_history_and_physical not created: {e}")
 
 
 
@@ -115,7 +131,7 @@ def create_ongoing_problems(clinical_history_and_physical_id,Problem_list , conn
 
     # Get the ID of the newly inserted patient
         ongoing_problems_id = cursor.lastrowid
-        print(f"Admission_form created successfully with ID: {ongoing_problems_id}")
+        print(f"create_ongoing_problems created successfully with ID: {ongoing_problems_id}")
         
     except Error as e:
         print(f"Error: {e}")
@@ -202,7 +218,7 @@ def create_occupation(create_clinical_history_and_physical_id, occupation, conn,
         else:
             # If the occupation does not exist, insert it as a detail
             query = """
-                INSERT INTO clinical_history_and_physical_patient_occupations (create_clinical_history_and_physical_id, detail)
+                INSERT INTO clinical_history_and_physical_patient_occupations (clinical_history_and_physical_id, detail)
                 VALUES (%s, %s)
             """
             cursor.execute(query, (create_clinical_history_and_physical_id, occupation))
@@ -231,11 +247,11 @@ def create_pshx(clinical_history_and_physical_id,pshx_value ,conn, cursor ):
 
     # Get the ID of the newly inserted patient
         pshx_id = cursor.lastrowid
-        print(f"Admission_form created successfully with ID: {pshx_id}")
+        print(f"create_pshx created successfully with ID: {pshx_id}")
 
 
     except Error as e:
-        print(f"Error: {e}")
+        print(f"Error create_pshx not created: {e}")
 
 
 def create_pmhx(clinical_history_and_physical_id, PMHX, conn, cursor):
@@ -254,11 +270,11 @@ def create_pmhx(clinical_history_and_physical_id, PMHX, conn, cursor):
 
     # Get the ID of the newly inserted patient
         clinical_history_and_physical_admission_pmhx_options_id = cursor.lastrowid
-        print(f"Admission_form created successfully with ID: {clinical_history_and_physical_admission_pmhx_options_id}")
+        print(f"create_pmhx created successfully with ID: {clinical_history_and_physical_admission_pmhx_options_id}")
 
 
     except Error as e:
-        print(f"Error: {e}")
+        print(f"Error create_pmhx not created: {e}")
 
 
 def create_contraception(clinical_history_and_physical_id, contraception, conn, cursor):
@@ -282,7 +298,7 @@ def create_contraception(clinical_history_and_physical_id, contraception, conn, 
             # If the contraception method exists, insert into the clinical history table
             contraception_method_id = result[0]
             query = """
-                INSERT INTO clinical_history_and_physical_patient_contraception (clinical_history_and_physical_id, contraception_method_id)
+                INSERT INTO clinical_history_and_physical_contraceptions (clinical_history_and_physical_id, contraception_method_id)
                 VALUES (%s, %s)
             """
             cursor.execute(query, (clinical_history_and_physical_id, contraception_method_id))
@@ -293,7 +309,7 @@ def create_contraception(clinical_history_and_physical_id, contraception, conn, 
         else:
             # If the contraception method does not exist, insert it as a detail
             query = """
-                INSERT INTO clinical_history_and_physical_patient_contraception (clinical_history_and_physical_id, detail)
+                INSERT INTO clinical_history_and_physical_contraceptions (clinical_history_and_physical_id, other)
                 VALUES (%s, %s)
             """
             cursor.execute(query, (clinical_history_and_physical_id, contraception))
@@ -302,12 +318,12 @@ def create_contraception(clinical_history_and_physical_id, contraception, conn, 
             record_id = cursor.lastrowid
             print(f"Unknown contraception method record created successfully with ID: {record_id}")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error Contraception not created: {e}")
 
 
 def create_gtpals(clinical_history_and_physical_id, G, T, P, A, L, description,  conn, cursor): 
     query = """
-    INSERT INTO clinical_history_and_physical_contraceptions (clinical_history_and_physical_id, gravida, term, preterm, abortions, living_children, description)
+    INSERT INTO clinical_history_and_physical_gtpals (clinical_history_and_physical_id,gravida,term,preterm,abortions,living_children,description)
     VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
     try:
@@ -318,7 +334,7 @@ def create_gtpals(clinical_history_and_physical_id, G, T, P, A, L, description, 
 
         # Get the ID of the newly inserted patient
         clinical_history_and_physical_patient_occupations_id = cursor.lastrowid
-        print(f"Admission_form created successfully with ID: {clinical_history_and_physical_patient_occupations_id}")
+        print(f"create_gtpals created successfully with ID: {clinical_history_and_physical_patient_occupations_id}")
         
     except Error as e:
         print(f"Error: {e}")
@@ -329,15 +345,16 @@ def get_sdpr_patient_id(patient_unique_id,  cursor):# no need for conn, no commi
 
     try:
         # Query to get the sdpr_patient_id
-        query_patient_id = "SELECT id FROM sdpr_patient WHERE id_number = %s"  # Adjust column name
+        query_patient_id = "SELECT id FROM sdpr_patients WHERE id_number = %s"  # Adjust column name
         cursor.execute(query_patient_id, (patient_unique_id,))
         result = cursor.fetchone()
 
         if result:
             sdpr_patient_id = result[0]
+            print(f"sdpr_patient_id: {sdpr_patient_id}")
             return sdpr_patient_id
         else:
-            print("Error: Patient record not found.")
+            print(f"Error sdpr_patient_id: Patient record not found. Result = {result}")
             return None
     except Error as e:
         print(f"Error while fetching sdpr_patient_id: {e}")
@@ -348,7 +365,7 @@ def create_socialhx(created_at, updated_at, sdpr_patient_id ,social_hx, conn, cu
     other = social_hx # This would have to be that data from stapletons files.
     admission_form_option_id = 11
     query = """
-    INSERT INTO spdr_patient_admission_form_options (sdpr_patient_id,  admission_form_option_id, other, cancelled, created_at, updated_at)
+    INSERT INTO sdpr_patient_admission_form_options (sdpr_patient_id,  admission_form_option_id, other, cancelled, created_at, updated_at)
     VALUES (%s, %s, %s, %s, %s, %s)
     """
     try:
@@ -359,10 +376,10 @@ def create_socialhx(created_at, updated_at, sdpr_patient_id ,social_hx, conn, cu
 
         # Get the ID of the newly inserted patient
         socialhx_id = cursor.lastrowid
-        print(f"Admission_form created successfully with ID: {socialhx_id}")
+        print(f"create_socialhx created successfully with ID: {socialhx_id}")
         
     except Error as e:
-        print(f"Error: {e}")
+        print(f"Error create_socialhx not created: {e}")
 
 
 def create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx, conn, cursor):# This family_hx would be the data from stapletons files. 
@@ -370,7 +387,7 @@ def create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx, conn, cu
     other = family_hx # This would have to be that data from stapletons files.
     admission_form_option_id = 14
     query = """
-    INSERT INTO spdr_patient_admission_form_options (sdpr_patient_id,  admission_form_option_id, other, cancelled, created_at, updated_at)
+    INSERT INTO sdpr_patient_admission_form_options (sdpr_patient_id,  admission_form_option_id, other, cancelled, created_at, updated_at)
     VALUES (%s, %s, %s, %s, %s, %s)
     """
     try:
@@ -381,10 +398,10 @@ def create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx, conn, cu
 
         # Get the ID of the newly inserted patient
         familyhx_id = cursor.lastrowid
-        print(f"Admission_form created successfully with ID: {familyhx_id}")
+        print(f"create_familyhx created successfully with ID: {familyhx_id}")
         
     except Error as e:
-        print(f"Error: {e}")
+        print(f"Error create_familyhx not created: {e}")
 
 
 def create_past_gyne_surg(patient_id, created_at, updated_at, prev_gyn_surg, conn, cursor):
@@ -465,11 +482,11 @@ def create_rxhx(patient_id, rxhx ,created_at,updated_at, conn, cursor):# this st
 
                 # Get the ID of the newly inserted patient
                 surgery_id = cursor.lastrowid
-                print(f"Admission_form created successfully with ID: {surgery_id}")
+                print(f"create_rxhx created successfully with ID: {surgery_id}")
         
         
             except Error as e:
-                print(f"Error: {e}")
+                print(f"Error create_rxhx not created: {e}")
 
 
         elif not result:
@@ -486,14 +503,14 @@ def create_rxhx(patient_id, rxhx ,created_at,updated_at, conn, cursor):# this st
 
                 # Get the ID of the newly inserted patient
                 surgery_id = cursor.lastrowid
-                print(f"Admission_form created successfully with ID: {surgery_id}")
+                print(f"create_rxhx default created successfully with ID: {surgery_id}")
         
         
             except Error as e:
-                print("Error: Patient record not found.")
+                print("Error family hx: Patient record not found.")
 
         else:
-            print("Error: Patient record not found.")
+            print("Error family hx: Patient record not found.")
             return None
         
     except Error as e:
@@ -517,7 +534,6 @@ def importing_data_from_stapleton_file(user_id,file_path, conn, cursor):
             
 
             title = row['Title']
-            print(row.keys())
             name_last = row['Namelast']
             name_first = row['NameFirst']
             id_number = row['ID'] ######### When creating the export try to merge in the id number - this is required for the patient table.
@@ -588,7 +604,6 @@ def importing_data_from_stapleton_file(user_id,file_path, conn, cursor):
             # Create the clinical_history_and_physical_id record and store the clinical_history_and_physical_id
             clinical_history_and_physical_id = create_clinical_history_and_physical(user_id, patient_id,admission_form_id, conn, cursor, created_at,updated_at)
 
-
             # Creates the ongoing_problems record
             create_ongoing_problems(clinical_history_and_physical_id, problem_list,conn,cursor)
 
@@ -618,7 +633,7 @@ def importing_data_from_stapleton_file(user_id,file_path, conn, cursor):
 
             # Creates the family_hx record
             create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx,conn,cursor)
-
+            
             # Creates the past gyne surg record
             create_past_gyne_surg(patient_id,created_at,updated_at ,prev_gyn_surg ,conn,cursor)
 
