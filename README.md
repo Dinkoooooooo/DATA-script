@@ -12,7 +12,9 @@ Command line:
 /# On another note . fields below carry values above 255 char, so columns would need to be updated to handle the fields.
 
 `clinical_history_and_physical_past_surgical_procedures:other` ,
+
 `clinical_history_and_physical_patient_ongoing_problems:name`, 
+
 `clinical_history_and_physical_admission_pmhx_options:other`
 
 /# Another note, 
@@ -20,10 +22,15 @@ Command line:
 These fields have been modified to split the text field with (/v), and add a record for each split section of the text. Also ignoring blank sections created by the split.
 
 `create_clinical_history_and_physical_past_surgical_procedures `
+
 `create_pmhx`
+
 `create_ongoing_problems`
+
 `create_rxhx`
+
 `create_familyhx`
+
 `create_socialhx`
 
 
