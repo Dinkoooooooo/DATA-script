@@ -10,6 +10,16 @@ from datetime import datetime
 import argparse
 import re
 
+import logging
+
+# Configure logging
+logging.basicConfig(
+    filename="output.log",  # Log file name
+    filemode="w",           # Use "w" to overwrite or "a" to append
+    format="%(asctime)s - %(message)s",  # Log message format
+    level=logging.INFO      # Log level (INFO, DEBUG, etc.)
+)
+
 #Create_patient()# save id
 #Create_vist()# None.
 #Create_admissionn_note()# save id
@@ -26,8 +36,6 @@ args = parser.parse_args()
 user_id = args.user_id
 
 
-
-
 def create_patient(Folder_number,Id_number,First_name,last_name,title,dob,Gender,created_at,updated_at,merged,organisation_id,canonical, conn, cursor):#open connection before, or after this runs, check with mike.
     
     # Time manipulation
@@ -36,11 +44,15 @@ def create_patient(Folder_number,Id_number,First_name,last_name,title,dob,Gender
     else:
         try:
             input_date = dob.strip()  # Remove leading/trailing whitespace
+            input_date = input_date.replace(".", "/")
+            input_date = input_date.replace("-", "/")
             parsed_date = datetime.strptime(input_date, "%d/%m/%Y")
             pdob = parsed_date.strftime("%Y/%m/%d")
         except ValueError:
             pdob = "0000/00/00"  # Default value for missing date
+            logging.info(f"Invalid date format for dob: {dob}. Expected format: DD/MM/YYYY replaced by default value" )
             raise ValueError(f"Invalid date format for dob: {dob}. Expected format: DD/MM/YYYY replaced by default value")
+
         
 
     # Gender determination
@@ -70,11 +82,14 @@ def create_patient(Folder_number,Id_number,First_name,last_name,title,dob,Gender
     # Get the ID of the newly inserted patient
         patient_id = cursor.lastrowid
         print(f"Patient created successfully with ID: {patient_id}")
+        logging.info(f"Patient created successfully with ID: {patient_id}") 
         
         return patient_id # returns the id for use in the next functions.
 
     except Error as e:
         print(f"Error patient not created: {e}")
+        logging.info(f"Error patient not created: {e}")
+        conn.rollback() 
 
 def create_admission_forms(patient_id,created_at,updated_at, conn, cursor):
 
@@ -91,13 +106,14 @@ def create_admission_forms(patient_id,created_at,updated_at, conn, cursor):
     # Get the ID of the newly inserted patient
         admission_form_id = cursor.lastrowid
         print(f"Admission_form created successfully with ID: {admission_form_id}")
+        logging.info(f"Admission_form created successfully with ID: {admission_form_id}")
         
         return admission_form_id # returns the id for use in the next functions.
 
     except Error as e:
         print(f"Error Admission form not created: {e}")
-
-
+        logging.info(f"Error Admission form not created: {e}")
+        conn.rollback() 
 
 def create_clinical_history_and_physical(user_id, patient_id,admission_form_id, conn, cursor, created_at,updated_at):
 
@@ -107,8 +123,6 @@ def create_clinical_history_and_physical(user_id, patient_id,admission_form_id, 
     created_at = time_for_import
     updated_at = time_for_import
     note_catagory_id = 6
-
-
 
     query = """
     INSERT INTO clinical_history_and_physicals (user_id, patient_id, recorded_at, signed_off, created_at, updated_at, note_category_id, admission_form_id)
@@ -123,33 +137,41 @@ def create_clinical_history_and_physical(user_id, patient_id,admission_form_id, 
     # Get the ID of the newly inserted patient
         clinical_history_and_physical_id = cursor.lastrowid
         print(f"create_clinical_history_and_physical created successfully with ID: {clinical_history_and_physical_id}")
-        
+        logging.info(f"create_clinical_history_and_physical created successfully with ID: {clinical_history_and_physical_id}")
         return clinical_history_and_physical_id # returns the id for use in the next functions.
 
     except Error as e:
         print(f"Error create_clinical_history_and_physical not created: {e}")
+        logging.info(f"Error create_clinical_history_and_physical not created: {e}")
+        conn.rollback()
 
 
-
-def create_ongoing_problems(clinical_history_and_physical_id,Problem_list , conn, cursor):
+def create_ongoing_problems(clinical_history_and_physical_id, Problem_list, conn, cursor):
     query = """
-    INSERT INTO clinical_history_and_physical_patient_ongoing_problems (clinical_history_and_physical_id,name)
+    INSERT INTO clinical_history_and_physical_patient_ongoing_problems (clinical_history_and_physical_id, name)
     VALUES (%s, %s)
     """
     try:
-        cursor.execute(query, (clinical_history_and_physical_id,Problem_list))
-    
-    # Commit the transaction
+        sections = Problem_list.split('\v')  # Split the Problem_list by vertical tab
+        for i, section in enumerate(sections, start=1):
+            # Skip empty sections
+            if not section.strip():  # strip removes leading/trailing whitespaces
+                print(f"Skipping empty section {i}")
+                continue
+
+            cursor.execute(query, (clinical_history_and_physical_id, section))  # Use section instead of Problem_list
+            # Get the ID of the newly inserted record
+            ongoing_problems_id = cursor.lastrowid
+            print(f"create_ongoing_problems created successfully with ID: {ongoing_problems_id}")
+            logging.info(f"create_ongoing_problems created successfully with ID: {ongoing_problems_id}")
+
+        # Commit the transaction once after the loop
         conn.commit()
 
-    # Get the ID of the newly inserted patient
-        ongoing_problems_id = cursor.lastrowid
-        print(f"create_ongoing_problems created successfully with ID: {ongoing_problems_id}")
-        
-    except Error as e:
-        print(f"Error: {e}")
-
-
+    except Exception as e:
+        print(f"Error ongoing problems: {e}")
+        logging.error(f"Error ongoing problems: {e}")
+        conn.rollback()  # Rollback in case of error to avoid partial data insert
 
 def create_allergies(patient_id, allergies, conn, cursor, created_at):
     """
@@ -185,6 +207,7 @@ def create_allergies(patient_id, allergies, conn, cursor, created_at):
 
             allergies_id = cursor.lastrowid
             print(f"Allergy record created successfully with ID: {allergies_id}")
+            logging.info(f"Allergy record created successfully with ID: {allergies_id}")
         else:
             # If the allergen does not exist, insert it as a failed allergen
             failed_allergen_id = 9  # ID for unknown allergens
@@ -197,8 +220,11 @@ def create_allergies(patient_id, allergies, conn, cursor, created_at):
 
             allergies_id = cursor.lastrowid
             print(f"Unknown allergen record created successfully with ID: {allergies_id}")
+            logging.info(f"Unknown allergen record created successfully with ID: {allergies_id}")
     except Exception as e:
         print(f"Error: {e}")
+        logging.info(f"Error: {e}")
+        conn.rollback() 
 
 
 
@@ -236,6 +262,7 @@ def create_occupation(create_clinical_history_and_physical_id, occupation, conn,
 
             record_id = cursor.lastrowid
             print(f"Occupation record created successfully with ID: {record_id}")
+            logging.info(f"Occupation record created successfully with ID: {record_id}")    
         else:
             # If the occupation does not exist, insert it as a detail
             query = """
@@ -247,55 +274,84 @@ def create_occupation(create_clinical_history_and_physical_id, occupation, conn,
 
             record_id = cursor.lastrowid
             print(f"Unknown occupation record created successfully with ID: {record_id}")
+            logging.info(f"Unknown occupation record created successfully with ID: {record_id}")
     except Exception as e:
         print(f"Error: {e}")
+        logging.info(f"Error: {e}")
+        conn.rollback() 
 
-
-
-def create_pshx(clinical_history_and_physical_id,pshx_value ,conn, cursor ):
+def create_pshx(clinical_history_and_physical_id, pshx_value, conn, cursor):
     other = pshx_value
-    default_value = 12
+    default_value = 12  # Set your default value for procedure_type_id
 
     query = """
-    INSERT INTO clinical_history_and_physical_past_surgical_procedures (clinical_history_and_physical_id, procedure_type_id, other)
+    INSERT INTO clinical_history_and_physical_past_surgical_procedures 
+    (clinical_history_and_physical_id, procedure_type_id, other)
     VALUES (%s, %s, %s)
     """
     try:
-        cursor.execute(query, (clinical_history_and_physical_id, default_value, other))
-    
-    # Commit the transaction
+        sections = other.split('\v')  # Split the pshx_value by vertical tab
+        for i, section in enumerate(sections, start=1):
+            # Skip empty sections
+            if not section.strip():  # strip removes leading/trailing whitespaces
+                print(f"Skipping empty section {i}")
+                continue
+
+            cursor.execute(query, (clinical_history_and_physical_id, default_value, section))  # Use section instead of other
+            # Get the ID of the newly inserted record
+            pshx_id = cursor.lastrowid
+            print(f"create_pshx created successfully with ID: {pshx_id}")
+            logging.info(f"create_pshx created successfully with ID: {pshx_id}")
+
+        # Commit the transaction once after the loop
         conn.commit()
 
-    # Get the ID of the newly inserted patient
-        pshx_id = cursor.lastrowid
-        print(f"create_pshx created successfully with ID: {pshx_id}")
-
-
-    except Error as e:
-        print(f"Error create_pshx not created: {e}")
-
+    except Exception as e:
+        print(f"Error during create_pshx: {e}")
+        logging.error(f"Error during create_pshx: {e}")
+        conn.rollback()  # Rollback in case of error to avoid partial data insert
 
 def create_pmhx(clinical_history_and_physical_id, PMHX, conn, cursor):
-    pmhx_option_id = 87
-    other_value = PMHX
+    """
+    Inserts records into the clinical_history_and_physical_admission_pmhx_options table
+    based on the provided PMHX data, split by vertical tabs.
 
+    Args:
+        clinical_history_and_physical_id (int): ID for the clinical history and physical entry.
+        PMHX (str): Past medical history data, potentially containing multiple sections separated by vertical tabs.
+        conn: The database connection object.
+        cursor: The database cursor object.
+    """
+    pmhx_option_id = 87
     query = """
-    INSERT INTO clinical_history_and_physical_admission_pmhx_options (clinical_history_and_physical_id, pmhx_option_id,other)
+    INSERT INTO clinical_history_and_physical_admission_pmhx_options (clinical_history_and_physical_id, pmhx_option_id, other)
     VALUES (%s, %s, %s)
     """
     try:
-        cursor.execute(query, (clinical_history_and_physical_id, pmhx_option_id, other_value))
-    
-    # Commit the transaction
+        sections = PMHX.split("\v")  # Split the PMHX value by vertical tabs
+        for i, section in enumerate(sections, start=1):
+            other_value = section.strip()  # Remove any leading/trailing whitespace
+
+            # Skip empty or whitespace-only sections
+            if not other_value:
+                print(f"Skipping empty section {i}")
+                logging.info(f"Skipping empty section {i}")
+                continue
+
+            cursor.execute(query, (clinical_history_and_physical_id, pmhx_option_id, other_value))
+
+            # Get the ID of the newly inserted record
+            clinical_history_and_physical_admission_pmhx_options_id = cursor.lastrowid
+            print(f"create_pmhx created successfully with ID: {clinical_history_and_physical_admission_pmhx_options_id}")
+            logging.info(f"create_pmhx created successfully with ID: {clinical_history_and_physical_admission_pmhx_options_id}")
+
+        # Commit the transaction once after all sections are processed
         conn.commit()
 
-    # Get the ID of the newly inserted patient
-        clinical_history_and_physical_admission_pmhx_options_id = cursor.lastrowid
-        print(f"create_pmhx created successfully with ID: {clinical_history_and_physical_admission_pmhx_options_id}")
-
-
-    except Error as e:
+    except Exception as e:
         print(f"Error create_pmhx not created: {e}")
+        logging.error(f"Error create_pmhx not created: {e}")
+        conn.rollback()  # Rollback in case of error to avoid partial data insert
 
 
 def create_contraception(clinical_history_and_physical_id, contraception, conn, cursor):
@@ -330,6 +386,7 @@ def create_contraception(clinical_history_and_physical_id, contraception, conn, 
 
             record_id = cursor.lastrowid
             print(f"Contraception record created successfully with ID: {record_id}")
+            logging.info(f"Contraception record created successfully with ID: {record_id}")
         else:
             # If the contraception method does not exist, insert it as a detail
             query = """
@@ -341,8 +398,12 @@ def create_contraception(clinical_history_and_physical_id, contraception, conn, 
 
             record_id = cursor.lastrowid
             print(f"Unknown contraception method record created successfully with ID: {record_id}")
+            logging.info(f"Unknown contraception method record created successfully with ID: {record_id}") 
+
     except Exception as e:
         print(f"Error Contraception not created: {e}")
+        logging.info(f"Error Contraception not created: {e}")
+        conn.rollback() 
 
 
 def fix_gtpal_type(s):
@@ -358,6 +419,7 @@ def create_gtpals(clinical_history_and_physical_id, G, T, P, A, L, description, 
     # cheeks if gtpals is empty, true = stop function
     if G == T== P == A == L == description ==None :
         print('gptals is empty')
+        logging.info('gptals is empty')
         return
     
     # fix gtpals to int
@@ -381,9 +443,11 @@ def create_gtpals(clinical_history_and_physical_id, G, T, P, A, L, description, 
         # Get the ID of the newly inserted patient
         clinical_history_and_physical_patient_occupations_id = cursor.lastrowid
         print(f"create_gtpals created successfully with ID: {clinical_history_and_physical_patient_occupations_id}")
-        
+        logging.info(f"create_gtpals created successfully with ID: {clinical_history_and_physical_patient_occupations_id}")
     except Error as e:
         print(f"Error: {e}")
+        logging.info(f"Error: {e}")
+        conn.rollback() 
 
 
 
@@ -399,55 +463,98 @@ def get_sdpr_patient_id(patient_unique_id ,created_at ,conn,  cursor):# no need 
         conn.commit()
         sdpr_patient_id = cursor.lastrowid
         print(f"sdpr_patient_id created successfully with ID: {sdpr_patient_id}")
+        logging.info(f"sdpr_patient_id created successfully with ID: {sdpr_patient_id}")
         return sdpr_patient_id
         
 
     except Error as e:
         print(f"Error while fetching sdpr_patient_id: {e}")
+        logging.info(f"Error while fetching sdpr_patient_id: {e}")
+        conn.rollback() 
         return None
 
-def create_socialhx(created_at, updated_at, sdpr_patient_id ,social_hx, conn, cursor):# This social_hx would be the data from stapletons files. ///// When sorted, duplicate the code for the other family_hx options.
+def create_socialhx(created_at, updated_at, sdpr_patient_id, social_hx, conn, cursor):
+    """
+    Inserts records into the sdpr_patient_admission_form_options table with formatted social history data.
+
+    Args:
+        created_at (str): The creation timestamp.
+        updated_at (str): The update timestamp.
+        sdpr_patient_id (int): The ID of the patient.
+        social_hx (str): Social history data, potentially containing multiple sections separated by vertical tabs.
+        conn: The database connection object.
+        cursor: The database cursor object.
+    """
     cancelled = 0
-    other = social_hx # This would have to be that data from stapletons files.
     admission_form_option_id = 11
     query = """
-    INSERT INTO sdpr_patient_admission_form_options (sdpr_patient_id,  admission_form_option_id, other, cancelled, created_at, updated_at)
+    INSERT INTO sdpr_patient_admission_form_options (sdpr_patient_id, admission_form_option_id, other, cancelled, created_at, updated_at)
     VALUES (%s, %s, %s, %s, %s, %s)
     """
     try:
-        cursor.execute(query, (sdpr_patient_id,  admission_form_option_id, other, cancelled, created_at, updated_at))
-    
-         # Commit the transaction
-        conn.commit()
+        sections = social_hx.split("\v")  # Split the social_hx string by vertical tabs
+        for section in sections:
+            other = section.strip()  # Remove any leading or trailing whitespace
+            if not other:  # Skip empty or whitespace-only sections
+                continue
 
-        # Get the ID of the newly inserted patient
-        socialhx_id = cursor.lastrowid
-        print(f"create_socialhx created successfully with ID: {socialhx_id}")
-        
+            cursor.execute(query, (sdpr_patient_id, admission_form_option_id, other, cancelled, created_at, updated_at))
+            
+            # Commit the transaction
+            conn.commit()
+
+            # Get the ID of the newly inserted record
+            socialhx_id = cursor.lastrowid
+            print(f"create_socialhx created successfully with ID: {socialhx_id}")
+            logging.info(f"create_socialhx created successfully with ID: {socialhx_id}")
+
     except Error as e:
         print(f"Error create_socialhx not created: {e}")
+        logging.info(f"Error create_socialhx not created: {e}")
+        conn.rollback()
 
 
-def create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx, conn, cursor):# This family_hx would be the data from stapletons files. 
+
+def create_familyhx(created_at, updated_at, sdpr_patient_id, family_hx, conn, cursor):
+    """
+    Inserts records into the sdpr_patient_admission_form_options table with formatted family history data.
+
+    Args:
+        created_at (str): The creation timestamp.
+        updated_at (str): The update timestamp.
+        sdpr_patient_id (int): The ID of the patient.
+        family_hx (str): Family history data, potentially containing multiple sections separated by vertical tabs.
+        conn: The database connection object.
+        cursor: The database cursor object.
+    """
     cancelled = 0
-    other = family_hx # This would have to be that data from stapletons files.
     admission_form_option_id = 14
     query = """
-    INSERT INTO sdpr_patient_admission_form_options (sdpr_patient_id,  admission_form_option_id, other, cancelled, created_at, updated_at)
+    INSERT INTO sdpr_patient_admission_form_options (sdpr_patient_id, admission_form_option_id, other, cancelled, created_at, updated_at)
     VALUES (%s, %s, %s, %s, %s, %s)
     """
     try:
-        cursor.execute(query, (sdpr_patient_id,  admission_form_option_id, other, cancelled, created_at, updated_at))
-    
-         # Commit the transaction
-        conn.commit()
+        sections = family_hx.split("\v")  # Split the family_hx string by vertical tabs
+        for section in sections:
+            other = section.strip()  # Remove any leading or trailing whitespace
+            if not other:  # Skip empty or whitespace-only sections
+                continue
 
-        # Get the ID of the newly inserted patient
-        familyhx_id = cursor.lastrowid
-        print(f"create_familyhx created successfully with ID: {familyhx_id}")
-        
+            cursor.execute(query, (sdpr_patient_id, admission_form_option_id, other, cancelled, created_at, updated_at))
+            
+            # Commit the transaction
+            conn.commit()
+
+            # Get the ID of the newly inserted record
+            familyhx_id = cursor.lastrowid
+            print(f"create_familyhx created successfully with ID: {familyhx_id}")
+            logging.info(f"create_familyhx created successfully with ID: {familyhx_id}")
+
     except Error as e:
         print(f"Error create_familyhx not created: {e}")
+        logging.info(f"Error create_familyhx not created: {e}")
+        conn.rollback()
+
 
 
 def create_past_gyne_surg(patient_id, created_at, updated_at, prev_gyn_surg, conn, cursor):
@@ -469,8 +576,11 @@ def create_past_gyne_surg(patient_id, created_at, updated_at, prev_gyn_surg, con
         # Get the ID of the newly inserted procedure
         procedure_id = cursor.lastrowid
         print(f"Procedure created successfully with ID: {procedure_id}")
+        logging.info(f"Procedure created successfully with ID: {procedure_id}")
     except Error as e:
         print(f"Error inserting procedure: {e}")
+        logging.info(f"Error inserting procedure: {e}")
+        conn.rollback() 
         return  # Exit the function to avoid referencing `procedure_id` if the insertion fails
 
     # Now, add the surgery to the database
@@ -487,8 +597,11 @@ def create_past_gyne_surg(patient_id, created_at, updated_at, prev_gyn_surg, con
         # Get the ID of the newly inserted surgery
         surgery_id = cursor.lastrowid
         print(f"Surgery created successfully with ID: {surgery_id}")
+        logging.info(f"Surgery created successfully with ID: {surgery_id}")
     except Error as e:
         print(f"Error inserting surgery: {e}")
+        logging.info(f"Error inserting surgery: {e}")
+        conn.rollback() 
 
     
 def create_rxhx(patient_id, rxhx ,created_at,updated_at, conn, cursor):# this still has to be worked on , reppurosed database check function
@@ -517,8 +630,8 @@ def create_rxhx(patient_id, rxhx ,created_at,updated_at, conn, cursor):# this st
         if result:
             drug_id = result[0]
             query = """
-            INSERT INTO patient_drugs (patient_id,drug_id,start_date,end_date,is_surgical_prophylaxis,created_at,updated_at,mark)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO patient_drugs (patient_id ,drug_id ,start_date ,end_date ,is_surgical_prophylaxis ,created_at ,updated_at ,mark)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
             try:
                 cursor.execute(query, (patient_id,drug_id,start_date,end_date,is_surgical_prophylaxis,created_at,updated_at,mark))
@@ -529,14 +642,18 @@ def create_rxhx(patient_id, rxhx ,created_at,updated_at, conn, cursor):# this st
                 # Get the ID of the newly inserted patient
                 surgery_id = cursor.lastrowid
                 print(f"create_rxhx created successfully with ID: {surgery_id} with drug id {drug_id}")
+                logging.info(f"create_rxhx created successfully with ID: {surgery_id} with drug id {drug_id}")
         
         
             except Error as e:
                 print(f"Error create_rxhx not created: {e}")
+                logging.info(f"Error create_rxhx not created: {e}")
+                conn.rollback() 
 
 
         elif not result:
             print(f"this is the patient id {patient_id}")
+            logging.info(f"this is the patient id {patient_id}")
             drug_id = 4397
             query = """
             INSERT INTO patient_drugs (patient_id,drug_id,start_date,end_date,is_surgical_prophylaxis,created_at,updated_at,mark)
@@ -551,17 +668,23 @@ def create_rxhx(patient_id, rxhx ,created_at,updated_at, conn, cursor):# this st
                 # Get the ID of the newly inserted patient
                 surgery_id = cursor.lastrowid
                 print(f"create_rxhx default created successfully with ID: {surgery_id}")
+                logging.info(f"create_rxhx default created successfully with ID: {surgery_id}")
         
         
             except Error as e:
                 print(f"Error create_rxhx 'other': {e}")
+                logging.info(f"Error create_rxhx 'other': {e}")
+                conn.rollback() 
 
         else:
             print("Error create_rxhx , other failure: Patient record not found.")
+            logging.info("Error create_rxhx , other failure: Patient record not found.")
             return None
         
     except Error as e:
         print(f"Error while fetching sdpr_patient_id(query failure): {e}")
+        logging.info(f"Error while fetching sdpr_patient_id(query failure): {e}")
+        conn.rollback() 
         
 
 #create patient done --> create Admission_form --> create clinical_history_and_physical_id --> continue normal flow.
@@ -637,6 +760,7 @@ def importing_data_from_stapleton_file(user_id,file_path, conn, cursor):
             canonical = "1"
 
             print(f"Processing row {row_number}")
+            logging.info(f"Processing row {row_number}")
 
             #These store ID's that would be used in the other tables.
             # Create the patient record and store the patient_id
@@ -683,8 +807,8 @@ def importing_data_from_stapleton_file(user_id,file_path, conn, cursor):
 
             create_rxhx(patient_id, rxhx ,created_at,updated_at, conn, cursor)
             print("\n")
+            logging.info("\n")
 # Down here, you want to create a make it run, the connection to the database and the tables. then between you are gonna want to add the importing patient data function.
-
 
 def Main_function():
     conn = None  # Declare the connection object
@@ -707,6 +831,7 @@ def Main_function():
 
     except Error as e:
         print(f"Error to connect to MySQL database")
+        logging.error(f"Error to connect to MySQL database")
 
     finally:
         # Close the cursor and the connection
@@ -715,6 +840,7 @@ def Main_function():
         if conn is not None:
             conn.close()
         print("Database connection closed.\n\n")
+        logging.info("Database connection closed.\n\n")
 
 
 ########### Now that all is done we should be able to run the main function
