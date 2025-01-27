@@ -67,7 +67,14 @@ The CSV file must include the following headers. Each column corresponds to a fi
 How it works:
 
 This function builds an INSERT SQL query to add a new patient record into the patients table.
-It uses the cursor.execute() method to execute the query with provided field values (e.g., Folder_number, Id_number, etc.).
+It uses the cursor.execute() method to execute the query with provided field values
+
+ (e.g.,Id_number,Folder_number,Id_number,First_name,last_name,title,dob,Gender,created_at,updated_at,merged,organisation_id,canonical).
+
+ `dob` - if there is no dob, it defaults to adding "0000/00/00"
+       if there is a dob, it strips it leading/trailing whitespace and formats any spacers to "/" and formats date to qa spec.
+
+`Gender` - Converts m/f to 0/1 and unspecified to 2
 
 After executing the query, cursor.lastrowid fetches the patient_id of the newly inserted record for further use.
 Error Handling: Catches database errors and prints them.
