@@ -49,14 +49,14 @@ The CSV file must include the following headers. Each column corresponds to a fi
 | `PMHx`            | `create_pmhx`                             | Used for past medical history (`other` field in `pmhx_options`).           |
 | `PSHx`            | `create_pshx`                             | Maps to surgical history records (`other` field in past surgical procedures). |
 | `RxHx`            | `create_rxhx`                             | Used for the `drug_name` field in `patient_drugs`.                         |
-| `Problem list`    | `create_ongoing_problems`                 | Maps to `Problem_list` in ongoing problems.                                |
+| `Problemlist`    | `create_ongoing_problems`                 | Maps to `Problem_list` in ongoing problems.                                |
 | `G`               | `create_gtpals`                           | Maps to `gravida` in obstetric history.                                    |
 | `T`               | `create_gtpals`                           | Maps to `term` in obstetric history.                                       |
 | `P`               | `create_gtpals`                           | Maps to `preterm` in obstetric history.                                    |
 | `A`               | `create_gtpals`                           | Maps to `abortions` in obstetric history.                                  |
 | `L`               | `create_gtpals`                           | Maps to `living_children` in obstetric history.                            |
 | `births`          | `create_gtpals`                           | Maps to the `description` field for obstetric history.                     |
-| `prev. gyn surg.` | `create_past_gyne_surg`                   | Used for past gynecological surgeries (`other` field).                     |
+| `prev.gynsurg.` | `create_past_gyne_surg`                   | Used for past gynecological surgeries (`other` field).                     |
 
 
 
