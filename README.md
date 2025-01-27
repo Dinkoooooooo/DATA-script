@@ -9,6 +9,23 @@ Command line:
 
 `python process_user_id.py 12345`
 
+/# On another note . fields below carry values above 255 char, so columns would need to be updated to handle the fields.
+
+`clinical_history_and_physical_past_surgical_procedures:other` ,
+`clinical_history_and_physical_patient_ongoing_problems:name`, 
+`clinical_history_and_physical_admission_pmhx_options:other`
+
+/# Another note, 
+
+These fields have been modified to split the text field with (/v), and add a record for each split section of the text. Also ignoring blank sections created by the split.
+
+`create_clinical_history_and_physical_past_surgical_procedures `
+`create_pmhx`
+`create_ongoing_problems`
+`create_rxhx`
+`create_familyhx`
+`create_socialhx`
+
 
 # The Conglomerate.py
 
@@ -123,7 +140,7 @@ How it works:
 It first queries the occupations table to check if the occupation already exists.
 
 If found, it associates the occupation_id with clinical_history_and_physical_patient_occupations.
-If not found, it inserts the occupation as a detail instead.
+If not found, it inserts the occupation as a `detail` instead.
 This ensures all occupations, known or unknown, are captured.
 
 7. `create_pshx`
@@ -132,7 +149,7 @@ How it works:
 
 The function inserts past surgical history into the clinical_history_and_physical_past_surgical_procedure table.
 
-It uses a default procedure_type_id and appends the provided other field for additional details.
+It uses a default procedure_type_id (12) and appends the provided other field for additional details.
 
 8. `create_pmhx`
 
@@ -140,7 +157,7 @@ How it works:
 
 Past medical history is recorded by linking the clinical_history_and_physical_id with a default pmhx_option_id.
 
-Additional information is stored in the other field.
+Additional information is stored in the `other` field.
 
 9. `create_contraception`
 
@@ -157,15 +174,19 @@ How it works:
 
 GTPAL (Gravida, Term, Preterm, Abortions, Living children) data is inserted directly into the clinical_history_and_physical_patient_contraception table.
 
+Use the fix_gtpal_type() function to convert string to int's.
+
+Also checks if the GTPALS' + description is empty, if empty skips the gtpals record.
+
 This provides a structured record of obstetric history, including an optional description.
 
 11. `get_sdpr_patient_id`
 
 How it works:
 
-The function queries the sdpr_patient table using a unique_identifier.
-
-If a matching record exists, it fetches the id of the patient for use in related functions.
+The function inserts a sdpr patient into the sdpr_patients table.
+links the records with the `patients_id` and adds the `created_at,updated_at` time, which is the time the record is processed.
+Then returns the `sdpr_patient_id`, for uses in other functions
 
 12. `create_socialhx`
 
