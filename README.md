@@ -9,6 +9,11 @@ Command line:
 
 `python process_user_id.py 12345`
 
+
+# The Conglomerate.py
+
+Script facilitates importing data from a CSV file into a MySQL database. The script processes each row of the CSV to insert records into multiple database tables, ensuring data consistency and logging operations.
+
 1. Ensure Required Dependencies
 Install mysql-connector-python if not already installed:
 
