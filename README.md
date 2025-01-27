@@ -44,8 +44,8 @@ The CSV file must include the following headers. Each column corresponds to a fi
 | `Contraception`   | `create_contraception`                    | Maps to `contraception` for contraception methods.                         |
 | `Occupation`      | `create_occupation`                       | Maps to `occupation` for the `clinical_history_and_physical_patient_occupations` table. |
 | `Allergies`       | `create_allergies`                        | Contains allergy data to be linked with `allergens`.                       |
-| `SocialHx:`       | `create_socialhx`                         | Maps to `social_hx` for social history records.                            |
-| `FamilyHx:`       | `create_familyhx`                         | Maps to `family_hx` for family history records.                            |
+| `SocialHx`       | `create_socialhx`                         | Maps to `social_hx` for social history records.                            |
+| `FamilyHx`       | `create_familyhx`                         | Maps to `family_hx` for family history records.                            |
 | `PMHx`            | `create_pmhx`                             | Used for past medical history (`other` field in `pmhx_options`).           |
 | `PSHx`            | `create_pshx`                             | Maps to surgical history records (`other` field in past surgical procedures). |
 | `RxHx`            | `create_rxhx`                             | Used for the `drug_name` field in `patient_drugs`.                         |
