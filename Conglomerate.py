@@ -8,6 +8,7 @@ import mysql.connector
 from mysql.connector import Error
 from datetime import datetime
 import argparse
+import re
 
 #Create_patient()# save id
 #Create_vist()# None.
@@ -30,7 +31,7 @@ user_id = args.user_id
 def create_patient(Folder_number,Id_number,First_name,last_name,title,dob,Gender,created_at,updated_at,merged,organisation_id,canonical, conn, cursor):#open connection before, or after this runs, check with mike.
     
     # Time manipulation
-    if dob is None or dob.strip() == "":
+    if dob is None or dob.strip() == "" or dob.strip() == '"':
         pdob = "0000/00/00"  # Default value for missing date
     else:
         try:
@@ -38,15 +39,20 @@ def create_patient(Folder_number,Id_number,First_name,last_name,title,dob,Gender
             parsed_date = datetime.strptime(input_date, "%d/%m/%Y")
             pdob = parsed_date.strftime("%Y/%m/%d")
         except ValueError:
-            raise ValueError(f"Invalid date format for dob: {dob}. Expected format: DD/MM/YYYY")
+            pdob = "0000/00/00"  # Default value for missing date
+            raise ValueError(f"Invalid date format for dob: {dob}. Expected format: DD/MM/YYYY replaced by default value")
         
 
     # Gender determination
+    if Gender != None:
 
-    if Gender.lower() == "m":
-        pGender = "0"
-    elif Gender.lower() == "f":
-        pGender = "1"
+        if Gender.lower() == "m":
+            pGender = "0"
+        elif Gender.lower() == "f":
+            pGender = "1"
+        else:
+            pGender = "2"
+
     else:
         pGender = "2"
 
@@ -155,6 +161,9 @@ def create_allergies(patient_id, allergies, conn, cursor, created_at):
         cursor: Database cursor object.
         created_at: Timestamp of record creation.
     """
+    if allergies is None:
+        return  # Skip if allergies is None
+
     recorded_at = created_at  # Use the passed timestamp as the recorded_at value
     allergy = allergies.strip().lower()  # Normalize allergy name
 
@@ -201,7 +210,12 @@ def create_occupation(create_clinical_history_and_physical_id, occupation, conn,
         occupation: Name of the occupation (string).
         conn: Database connection object.
         cursor: Database cursor object.
+    
     """
+
+    if occupation is None:
+        return  # Skip if occupation is None
+    
     occupation = occupation.strip().lower()  # Normalize the occupation name
 
     try:
@@ -293,6 +307,9 @@ def create_contraception(clinical_history_and_physical_id, contraception, conn, 
         conn: Database connection object.
         cursor: Database cursor object.
     """
+    if contraception is None:
+        return  # Skip if contraception is None
+    
     contraception = contraception.strip().lower()  # Normalize the contraception name
 
     try:
@@ -331,21 +348,25 @@ def create_contraception(clinical_history_and_physical_id, contraception, conn, 
 def fix_gtpal_type(s):
     if s == "":
         return None
-    return int(s)
+    s = re.sub(r"\D", "", s)
+    return int(s) if s else None
 
 def create_gtpals(clinical_history_and_physical_id, G, T, P, A, L, description,  conn, cursor): 
 
-    # fix gtpals to int
-    G = fix_gtpal_type(G)
-    T = fix_gtpal_type(T)
-    P = fix_gtpal_type(P)
-    A = fix_gtpal_type(A)
-    L = fix_gtpal_type(L)
+    
 
     # cheeks if gtpals is empty, true = stop function
     if G == T== P == A == L == description ==None :
         print('gptals is empty')
         return
+    
+    # fix gtpals to int
+
+    G = fix_gtpal_type(G)
+    T = fix_gtpal_type(T)
+    P = fix_gtpal_type(P)
+    A = fix_gtpal_type(A)
+    L = fix_gtpal_type(L)
     
     query = """
     INSERT INTO clinical_history_and_physical_gtpals (clinical_history_and_physical_id,gravida,term,preterm,abortions,living_children,description)
@@ -515,7 +536,7 @@ def create_rxhx(patient_id, rxhx ,created_at,updated_at, conn, cursor):# this st
 
 
         elif not result:
-            print(f"this is tha patient id {patient_id}")
+            print(f"this is the patient id {patient_id}")
             drug_id = 4397
             query = """
             INSERT INTO patient_drugs (patient_id,drug_id,start_date,end_date,is_surgical_prophylaxis,created_at,updated_at,mark)
@@ -614,6 +635,8 @@ def importing_data_from_stapleton_file(user_id,file_path, conn, cursor):
             merged = "0"
             organisation_id = "67571" #######, organisation id hard coded for now, for this one use case.
             canonical = "1"
+
+            print(f"Processing row {row_number}")
 
             #These store ID's that would be used in the other tables.
             # Create the patient record and store the patient_id
