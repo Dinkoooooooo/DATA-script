@@ -36,60 +36,86 @@ args = parser.parse_args()
 user_id = args.user_id
 
 
-def create_patient(Folder_number,Id_number,First_name,last_name,title,dob,Gender,created_at,updated_at,merged,organisation_id,canonical, conn, cursor):#open connection before, or after this runs, check with mike.
-    
-    # Time manipulation
-    if dob is None or dob.strip() == "" or dob.strip() == '"':
-        pdob = "0000/00/00"  # Default value for missing date
-    else:
-        try:
-            input_date = dob.strip()  # Remove leading/trailing whitespace
-            input_date = input_date.replace(".", "/")
-            input_date = input_date.replace("-", "/")
-            parsed_date = datetime.strptime(input_date, "%d/%m/%Y")
-            pdob = parsed_date.strftime("%Y/%m/%d")
-        except ValueError:
-            pdob = "0000/00/00"  # Default value for missing date
-            logging.info(f"Invalid date format for dob: {dob}. Expected format: DD/MM/YYYY replaced by default value" )
-            raise ValueError(f"Invalid date format for dob: {dob}. Expected format: DD/MM/YYYY replaced by default value")
+import logging
+from datetime import datetime
+from mysql.connector import Error
 
-        
+def create_patient(folder_number, id_number, first_name, last_name, title, dob, gender, created_at, updated_at, merged, organisation_id, canonical, conn, cursor):
+    """
+    Creates a patient record in the database if it does not already exist.
 
-    # Gender determination
-    if Gender != None:
+    Args:
+        folder_number (str): Patient's folder number.
+        id_number (str): Patient's ID number.
+        first_name (str): First name of the patient.
+        last_name (str): Last name of the patient.
+        title (str): Title of the patient (e.g., Mr., Mrs.).
+        dob (str): Date of birth in DD/MM/YYYY format.
+        gender (str): Gender (M/F/Other).
+        created_at (str): Timestamp for record creation.
+        updated_at (str): Timestamp for record update.
+        merged (bool): Merged flag.
+        organisation_id (str): Organisation ID.
+        canonical (str): Canonical ID.
+        conn: Database connection.
+        cursor: Database cursor.
 
-        if Gender.lower() == "m":
-            pGender = "0"
-        elif Gender.lower() == "f":
-            pGender = "1"
-        else:
-            pGender = "2"
-
-    else:
-        pGender = "2"
-
-    
-    query = """
-        INSERT INTO patients (folder, Id_number, First_name, last_name, title, date_of_birth, Gender, created_at, updated_at, merged, organisation_id, canonical)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
-        """
+    Returns:
+        int: ID of the existing or newly created patient.
+    """
     try:
-        cursor.execute(query, (Folder_number, Id_number, First_name, last_name, title, pdob, pGender, created_at, updated_at, merged, organisation_id, canonical))
+        # Check if the patient exists
+        patient_query = """
+        SELECT id 
+        FROM patients 
+        WHERE folder = %s AND organisation_id = %s AND canonical = %s
+        """
+        cursor.execute(patient_query, (folder_number, organisation_id , canonical))
+        results = cursor.fetchall()
 
-    # Commit the transaction
+        if results:
+            print(f'this is the patients found {results}')
+            logging.info(f'this is the patients found {results}')
+            result = results[-1]
+            patient_id = result[0]
+            print(f"Patient exists with ID: {patient_id}")
+            logging.info(f"Patient exists with ID: {patient_id}")
+            return patient_id
+
+        # Parse and validate date of birth
+        if dob:
+            try:
+                dob = dob.replace(".", "/").replace("-", "/")
+                parsed_date = datetime.strptime(dob.strip(), "%d/%m/%Y")
+                pdob = parsed_date.strftime("%Y/%m/%d")
+            except ValueError:
+                logging.error(f"Invalid DOB format: {dob}. Using default '0000/00/00'.")
+                pdob = "0000/00/00"
+        else:
+            pdob = "0000/00/00"
+
+        # Determine gender
+        gender_map = {"m": "0", "f": "1"}
+        p_gender = gender_map.get(gender.lower(), "2") if gender else "2"
+
+        # Insert new patient record
+        query = """
+        INSERT INTO patients (folder, id_number, first_name, last_name, title, date_of_birth, gender, created_at, updated_at, merged, organisation_id, canonical)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(query, (folder_number, id_number, first_name, last_name, title, pdob, p_gender, created_at, updated_at, merged, organisation_id, canonical))
         conn.commit()
 
-    # Get the ID of the newly inserted patient
+        # Retrieve the ID of the newly created patient
         patient_id = cursor.lastrowid
         print(f"Patient created successfully with ID: {patient_id}")
-        logging.info(f"Patient created successfully with ID: {patient_id}") 
-        
-        return patient_id # returns the id for use in the next functions.
+        logging.info(f"Patient created successfully with ID: {patient_id}")
+        return patient_id
 
     except Error as e:
-        print(f"Error patient not created: {e}")
-        logging.info(f"Error patient not created: {e}")
-        conn.rollback() 
+        logging.error(f"Error creating patient: {e}")
+        conn.rollback()
+        raise
 
 def create_admission_forms(patient_id,created_at,updated_at, conn, cursor):
 
@@ -147,6 +173,7 @@ def create_clinical_history_and_physical(user_id, patient_id,admission_form_id, 
 
 
 def create_ongoing_problems(clinical_history_and_physical_id, Problem_list, conn, cursor):
+
     query = """
     INSERT INTO clinical_history_and_physical_patient_ongoing_problems (clinical_history_and_physical_id, name)
     VALUES (%s, %s)
