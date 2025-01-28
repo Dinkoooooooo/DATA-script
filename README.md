@@ -95,6 +95,9 @@ It uses the cursor.execute() method to execute the query with provided field val
 
  (e.g.,Id_number,Folder_number,Id_number,First_name,last_name,title,dob,Gender,created_at,updated_at,merged,organisation_id,canonical).
 
+ Also check if patient already exists, based on folder + org_id + canonical , then uses the last record found and returns the patient id.
+if it finds nothing it creates the patient record.
+
  `dob` - if there is no dob, it defaults to adding "0000/00/00"
        if there is a dob, it strips it leading/trailing whitespace and formats any spacers to "/" and formats date to qa spec.
 
