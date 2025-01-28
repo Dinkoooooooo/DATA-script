@@ -9,6 +9,35 @@ Command line:
 
 `python process_user_id.py 12345`
 
+/# On another note . fields below carry values above 255 char, so columns would need to be updated to handle the fields.
+
+`clinical_history_and_physical_past_surgical_procedures:other` ,
+
+`clinical_history_and_physical_patient_ongoing_problems:name`, 
+
+`clinical_history_and_physical_admission_pmhx_options:other`
+
+/# Another note, 
+
+These fields have been modified to split the text field with (/v), and add a record for each split section of the text. Also ignoring blank sections created by the split.
+
+`create_clinical_history_and_physical_past_surgical_procedures `
+
+`create_pmhx`
+
+`create_ongoing_problems`
+
+`create_rxhx`
+
+`create_familyhx`
+
+`create_socialhx`
+
+
+# The Conglomerate.py
+
+Script facilitates importing data from a CSV file into a MySQL database. The script processes each row of the CSV to insert records into multiple database tables, ensuring data consistency and logging operations.
+
 1. Ensure Required Dependencies
 Install mysql-connector-python if not already installed:
 
@@ -39,19 +68,19 @@ The CSV file must include the following headers. Each column corresponds to a fi
 | `Contraception`   | `create_contraception`                    | Maps to `contraception` for contraception methods.                         |
 | `Occupation`      | `create_occupation`                       | Maps to `occupation` for the `clinical_history_and_physical_patient_occupations` table. |
 | `Allergies`       | `create_allergies`                        | Contains allergy data to be linked with `allergens`.                       |
-| `SocialHx:`       | `create_socialhx`                         | Maps to `social_hx` for social history records.                            |
-| `FamilyHx:`       | `create_familyhx`                         | Maps to `family_hx` for family history records.                            |
+| `SocialHx`       | `create_socialhx`                         | Maps to `social_hx` for social history records.                            |
+| `FamilyHx`       | `create_familyhx`                         | Maps to `family_hx` for family history records.                            |
 | `PMHx`            | `create_pmhx`                             | Used for past medical history (`other` field in `pmhx_options`).           |
 | `PSHx`            | `create_pshx`                             | Maps to surgical history records (`other` field in past surgical procedures). |
 | `RxHx`            | `create_rxhx`                             | Used for the `drug_name` field in `patient_drugs`.                         |
-| `Problem list`    | `create_ongoing_problems`                 | Maps to `Problem_list` in ongoing problems.                                |
+| `Problemlist`    | `create_ongoing_problems`                 | Maps to `Problem_list` in ongoing problems.                                |
 | `G`               | `create_gtpals`                           | Maps to `gravida` in obstetric history.                                    |
 | `T`               | `create_gtpals`                           | Maps to `term` in obstetric history.                                       |
 | `P`               | `create_gtpals`                           | Maps to `preterm` in obstetric history.                                    |
 | `A`               | `create_gtpals`                           | Maps to `abortions` in obstetric history.                                  |
 | `L`               | `create_gtpals`                           | Maps to `living_children` in obstetric history.                            |
 | `births`          | `create_gtpals`                           | Maps to the `description` field for obstetric history.                     |
-| `prev. gyn surg.` | `create_past_gyne_surg`                   | Used for past gynecological surgeries (`other` field).                     |
+| `prev.gynsurg.` | `create_past_gyne_surg`                   | Used for past gynecological surgeries (`other` field).                     |
 
 
 
@@ -62,7 +91,17 @@ The CSV file must include the following headers. Each column corresponds to a fi
 How it works:
 
 This function builds an INSERT SQL query to add a new patient record into the patients table.
-It uses the cursor.execute() method to execute the query with provided field values (e.g., Folder_number, Id_number, etc.).
+It uses the cursor.execute() method to execute the query with provided field values
+
+ (e.g.,Id_number,Folder_number,Id_number,First_name,last_name,title,dob,Gender,created_at,updated_at,merged,organisation_id,canonical).
+
+ Also check if patient already exists, based on folder + org_id + canonical , then uses the last record found and returns the patient id.
+if it finds nothing it creates the patient record.
+
+ `dob` - if there is no dob, it defaults to adding "0000/00/00"
+       if there is a dob, it strips it leading/trailing whitespace and formats any spacers to "/" and formats date to qa spec.
+
+`Gender` - Converts m/f to 0/1 and unspecified to 2
 
 After executing the query, cursor.lastrowid fetches the patient_id of the newly inserted record for further use.
 Error Handling: Catches database errors and prints them.
@@ -111,7 +150,7 @@ How it works:
 It first queries the occupations table to check if the occupation already exists.
 
 If found, it associates the occupation_id with clinical_history_and_physical_patient_occupations.
-If not found, it inserts the occupation as a detail instead.
+If not found, it inserts the occupation as a `detail` instead.
 This ensures all occupations, known or unknown, are captured.
 
 7. `create_pshx`
@@ -120,7 +159,7 @@ How it works:
 
 The function inserts past surgical history into the clinical_history_and_physical_past_surgical_procedure table.
 
-It uses a default procedure_type_id and appends the provided other field for additional details.
+It uses a default procedure_type_id (12) and appends the provided other field for additional details.
 
 8. `create_pmhx`
 
@@ -128,7 +167,7 @@ How it works:
 
 Past medical history is recorded by linking the clinical_history_and_physical_id with a default pmhx_option_id.
 
-Additional information is stored in the other field.
+Additional information is stored in the `other` field.
 
 9. `create_contraception`
 
@@ -145,15 +184,19 @@ How it works:
 
 GTPAL (Gravida, Term, Preterm, Abortions, Living children) data is inserted directly into the clinical_history_and_physical_patient_contraception table.
 
+Use the fix_gtpal_type() function to convert string to int's.
+
+Also checks if the GTPALS' + description is empty, if empty skips the gtpals record.
+
 This provides a structured record of obstetric history, including an optional description.
 
 11. `get_sdpr_patient_id`
 
 How it works:
 
-The function queries the sdpr_patient table using a unique_identifier.
-
-If a matching record exists, it fetches the id of the patient for use in related functions.
+The function inserts a sdpr patient into the sdpr_patients table.
+links the records with the `patients_id` and adds the `created_at,updated_at` time, which is the time the record is processed.
+Then returns the `sdpr_patient_id`, for uses in other functions
 
 12. `create_socialhx`
 
