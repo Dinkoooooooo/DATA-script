@@ -3,7 +3,7 @@ For Importing,pms data to bb
 
 #Note, need to update sql server details when used.
 
-`User_id is added with a command line argument` so 
+`User_id` is added with a command line argument so 
 
 Command line:
 
