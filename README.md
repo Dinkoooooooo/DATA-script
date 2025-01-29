@@ -7,7 +7,7 @@ For Importing,pms data to bb
 
 Command line:
 
-`python process_user_id.py 12345`
+`python Conglomerate.py 12345` - `python <filename> <user_id>`
 
 /# On another note . fields below carry values above 255 char, so columns would need to be updated to handle the fields.
 
