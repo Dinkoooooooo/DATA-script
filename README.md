@@ -3,11 +3,13 @@ For Importing,pms data to bb
 
 #Note, need to update sql server details when used.
 
-`User_id` is added with a command line argument so 
+`User_id` is added with a command line argument.
+
+To run this script and add data from from your csv to your database you would need to use the following Command line.
 
 Command line:
 
-`python Conglomerate.py 12345` - `python <filename> <user_id>`
+`python <filename> <user_id>` - `python Conglomerate.py 12345`
 
 /# On another note . fields below carry values above 255 char, so columns would need to be updated to handle the fields.
 
