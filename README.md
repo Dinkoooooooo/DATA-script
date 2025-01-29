@@ -9,7 +9,7 @@ To run this script and add data from from your csv to your database you would ne
 
 Command line:
 
- `python Conglomerate.py 12345`
+ `python Conglomerate.py <user_id> <csv_file>`
 
 /# On another note . fields below carry values above 255 char, so columns would need to be updated to handle the fields.
 
