@@ -26,14 +26,23 @@ logging.basicConfig(
 
 
 # Set up the argument parser
-parser = argparse.ArgumentParser(description="Process user ID from the command line.")
+import argparse
+
+# Create the argument parser
+parser = argparse.ArgumentParser(description="Process user ID and a file from the command line.")
 parser.add_argument('user_id', type=str, help="The User ID to be processed")
+parser.add_argument('file', type=str, help="The file to be processed (e.g., file.csv)")
 
 # Parse the command-line arguments
 args = parser.parse_args()
 
-# Assign the user_id from the command-line argument
+# Assign the user_id and file from the command-line arguments
 user_id = args.user_id
+file_path = args.file
+
+# Print the parsed arguments (for demonstration purposes)
+print(f"User ID: {user_id}")
+print(f"File Path: {file_path}")
 
 
 import logging
@@ -74,8 +83,6 @@ def create_patient(folder_number, id_number, first_name, last_name, title, dob, 
         results = cursor.fetchall()
 
         if results:
-            print(f'this is the patients found {results}')
-            logging.info(f'this is the patients found {results}')
             result = results[-1]
             patient_id = result[0]
             print(f"Patient exists with ID: {patient_id}")
@@ -719,7 +726,7 @@ def create_rxhx(patient_id, rxhx ,created_at,updated_at, conn, cursor):# this st
 
 #Theres still more to do, but untill i figure it out, lemme work on how the the PROCESS works.
 
-file_path = "tester.csv" #this will be stapletons export file.
+
 
 def importing_data_from_stapleton_file(user_id,file_path, conn, cursor):
     # Open the CSV file
@@ -845,11 +852,11 @@ def Main_function():
     try:
         # Establish the database connection
         conn = mysql.connector.connect(
-            host='',
-            port='',
-            database='',
-            user='',
-            password=''
+            host='192.168.1.8',
+            port='3309',
+            database='weblab',
+            user='dino',
+            password='w&q$s4odSu63GaUG8gSGK'
         )
         
         # Initialize the cursor
