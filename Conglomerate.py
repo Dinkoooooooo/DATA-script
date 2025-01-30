@@ -14,7 +14,7 @@ import logging
 
 # Configure logging
 logging.basicConfig(
-    filename="output.log",  # Log file name
+    filename="Import_logging_output.log",  # Log file name
     filemode="w",           # Use "w" to overwrite or "a" to append
     format="%(asctime)s - %(message)s",  # Log message format
     level=logging.INFO      # Log level (INFO, DEBUG, etc.)
@@ -852,11 +852,11 @@ def Main_function():
     try:
         # Establish the database connection
         conn = mysql.connector.connect(
-            host='192.168.1.8',
-            port='3309',
-            database='weblab',
-            user='dino',
-            password='w&q$s4odSu63GaUG8gSGK'
+            host='',
+            port='',
+            database='',
+            user='',
+            password=''
         )
         
         # Initialize the cursor
