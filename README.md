@@ -104,7 +104,7 @@ The CSV file must include the following headers. Each column corresponds to a fi
 ### 7. `create_pshx`
 - **Purpose:** Logs past surgical history.
 - **Key Operations:**
-  - Adds records to `clinical_history_and_physical_past_surgical_procedure`.
+  - Adds records to `clinical_history_and_physical_past_surgical_procedures`.
   - Uses a default `procedure_type_id` and appends additional details.
 
 ### 8. `create_pmhx`
@@ -122,7 +122,7 @@ The CSV file must include the following headers. Each column corresponds to a fi
 ### 10. `create_gtpals`
 - **Purpose:** Adds obstetric history (GTPAL).
 - **Key Operations:**
-  - Inserts data into `clinical_history_and_physical_patient_contraception`.
+  - Inserts data into `clinical_history_and_physical_gtpals`.
   - Skips empty records.
 
 ### 11. `get_sdpr_patient_id`
