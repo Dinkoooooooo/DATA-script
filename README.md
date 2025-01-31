@@ -133,7 +133,7 @@ The CSV file must include the following headers. Each column corresponds to a fi
 ### 12. `create_socialhx`
 - **Purpose:** Logs social history.
 - **Key Operations:**
-  - Inserts records into `spdr_patient_admission_form_options`.
+  - Inserts records into `admission_form_option_answers`.
   - Uses a specific `admission_form_option_id`.
 
 ### 13. `create_familyhx`
