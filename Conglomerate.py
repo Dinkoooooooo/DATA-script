@@ -190,7 +190,7 @@ def create_ongoing_problems(clinical_history_and_physical_id, Problem_list, conn
         for i, section in enumerate(sections, start=1):
             # Skip empty sections
             if not section.strip():  # strip removes leading/trailing whitespaces
-                print(f"Skipping empty section {i}")
+                print(f"Skipping empty section in problem list {i}")
                 continue
 
             cursor.execute(query, (clinical_history_and_physical_id, section))  # Use section instead of Problem_list
@@ -507,7 +507,7 @@ def get_sdpr_patient_id(patient_unique_id ,created_at ,conn,  cursor):# no need 
         conn.rollback() 
         return None
 
-def create_socialhx(created_at, updated_at, sdpr_patient_id, social_hx, conn, cursor):
+def create_socialhx(admission_form_id, social_hx, conn, cursor):
     """
     Inserts records into the sdpr_patient_admission_form_options table with formatted social history data.
 
@@ -522,8 +522,8 @@ def create_socialhx(created_at, updated_at, sdpr_patient_id, social_hx, conn, cu
     cancelled = 0
     admission_form_option_id = 11
     query = """
-    INSERT INTO sdpr_patient_admission_form_options (sdpr_patient_id, admission_form_option_id, other, cancelled, created_at, updated_at)
-    VALUES (%s, %s, %s, %s, %s, %s)
+    INSERT INTO admission_form_option_answers (admission_form_id,admission_form_option_id, other, cancelled)
+    VALUES ( %s, %s, %s, %s)
     """
     try:
         sections = social_hx.split("\v")  # Split the social_hx string by vertical tabs
@@ -532,7 +532,7 @@ def create_socialhx(created_at, updated_at, sdpr_patient_id, social_hx, conn, cu
             if not other:  # Skip empty or whitespace-only sections
                 continue
 
-            cursor.execute(query, (sdpr_patient_id, admission_form_option_id, other, cancelled, created_at, updated_at))
+            cursor.execute(query, (admission_form_id, admission_form_option_id, other, cancelled))
             
             # Commit the transaction
             conn.commit()
@@ -549,7 +549,7 @@ def create_socialhx(created_at, updated_at, sdpr_patient_id, social_hx, conn, cu
 
 
 
-def create_familyhx(created_at, updated_at, sdpr_patient_id, family_hx, conn, cursor):
+def create_familyhx(admission_form_id, family_hx, conn, cursor):
     """
     Inserts records into the sdpr_patient_admission_form_options table with formatted family history data.
 
@@ -564,8 +564,8 @@ def create_familyhx(created_at, updated_at, sdpr_patient_id, family_hx, conn, cu
     cancelled = 0
     admission_form_option_id = 14
     query = """
-    INSERT INTO sdpr_patient_admission_form_options (sdpr_patient_id, admission_form_option_id, other, cancelled, created_at, updated_at)
-    VALUES (%s, %s, %s, %s, %s, %s)
+    INSERT INTO admission_form_option_answers (admission_form_id,admission_form_option_id, other, cancelled)
+    VALUES (%s, %s, %s, %s)
     """
     try:
         sections = family_hx.split("\v")  # Split the family_hx string by vertical tabs
@@ -574,7 +574,7 @@ def create_familyhx(created_at, updated_at, sdpr_patient_id, family_hx, conn, cu
             if not other:  # Skip empty or whitespace-only sections
                 continue
 
-            cursor.execute(query, (sdpr_patient_id, admission_form_option_id, other, cancelled, created_at, updated_at))
+            cursor.execute(query, (admission_form_id,admission_form_option_id, other, cancelled))
             
             # Commit the transaction
             conn.commit()
@@ -644,15 +644,7 @@ def create_rxhx(patient_id, rxhx ,created_at,updated_at, conn, cursor):# this st
     start_date = created_at
     end_date = created_at
     is_surgical_prophylaxis = 0
-    """
-    Fetches the drugs for a given unique patient identifier.
-    
-    Args:
-        patient_unique_id (str): The unique identifier for the patient (e.g., name, patient ID).
-    
-    Returns:
-        int: The sdpr_patient_id if found, or None if the patient does not exist.
-    """
+
     try:
         # Query to check the drugfrom the pms , if its in the database.
         query_drug_id = "SELECT id FROM drugs WHERE name = %s"  # Adjust column name
@@ -828,13 +820,13 @@ def importing_data_from_stapleton_file(user_id,file_path, conn, cursor):
             create_pshx(clinical_history_and_physical_id,pshx,conn,cursor )
 
             # Creates the sdpr_patient_id value for social_hx and Family Hx
-            sdpr_patient_id = get_sdpr_patient_id(id_number,created_at ,conn, cursor)
+            #sdpr_patient_id = get_sdpr_patient_id(id_number,created_at ,conn, cursor)
 
             # Creates the social_hx record
-            create_socialhx(created_at, updated_at, sdpr_patient_id ,social_hx,conn,cursor)
+            create_socialhx(admission_form_id ,social_hx,conn,cursor)
 
             # Creates the family_hx record
-            create_familyhx(created_at, updated_at, sdpr_patient_id ,family_hx,conn,cursor)
+            create_familyhx(admission_form_id ,social_hx,conn,cursor)
             
             # Creates the past gyne surg record
             create_past_gyne_surg(patient_id,created_at,updated_at ,prev_gyn_surg ,conn,cursor)
