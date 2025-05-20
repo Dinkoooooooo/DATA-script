@@ -57,6 +57,10 @@ The CSV file must include the following headers. Each column corresponds to a fi
 | `prev.gynsurg.`   | `create_past_gyne_surg`                   | Used for past gynecological surgeries (`other` field).                     |
 
 ---
+## Filemaker Export
+
+![image](https://github.com/user-attachments/assets/91efb27e-b398-48d5-825e-864dd6fc05f3)
+
 
 ## Key Functionality
 
