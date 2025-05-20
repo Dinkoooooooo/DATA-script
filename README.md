@@ -36,6 +36,7 @@ The CSV file must include the following headers. Each column corresponds to a fi
 | `Title`           | `create_patient`                          | Used for the `title` field in the `patients` table.                        |
 | `Name Last`       | `create_patient`                          | Maps to `last_name` in the `patients` table.                               |
 | `Name First`      | `create_patient`                          | Maps to `First_name` in the `patients` table.                              |
+| `folder`          | ``                                        |                                                                            |
 | `ID`              | `create_patient`, `get_sdpr_patient_id`   | Used as `Id_number` for `patients` and `unique_identifier` for `sdpr_patient`. |
 | `DOB`             | `create_patient`                          | Used for the `dob` field in the `patients` table.                          |
 | `Gender`          | `create_patient`                          | Used for the `Gender` field in the `patients` table.                       |
